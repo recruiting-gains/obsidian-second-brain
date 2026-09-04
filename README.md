@@ -70,6 +70,11 @@
   <a href="CHANGELOG.md">See the changelog &rarr;</a>
 </p>
 
+> [!IMPORTANT]
+> **Cruz local-first fork:** start with [CRUZ_SETUP.md](CRUZ_SETUP.md). Its private vault uses a
+> reviewed, non-interactive initializer and four schema-bound Codex skills. Do not run the
+> generic/global installers below for that vault; they target the upstream multi-platform workflow.
+
 ---
 
 ## The Problem

@@ -41,3 +41,11 @@ pnpm-lock.yaml
 # Per-vault retrieval eval cases (contain private note paths; generate locally)
 scripts/eval/retrieval_cases*.jsonl
 scripts/eval/behavior_cases.jsonl
+
+# Cruz local-first extension
+# `starter-vault/` is the sanitized, reviewable template. `vault/` is the live
+# personal vault and must never be pushed with this public fork.
+/vault/
+/work/
+/outputs/
+*.private.json

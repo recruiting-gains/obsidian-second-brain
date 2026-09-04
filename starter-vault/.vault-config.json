@@ -1,0 +1,21 @@
+{
+  "exclude-dirs": [".agents", ".brain"],
+  "exclude-paths": [
+    "00 Inbox/AI News/README.md",
+    "00 Inbox/AI Usage/README.md",
+    "00 Inbox/ChatGPT/README.md",
+    "00 Inbox/Images/README.md",
+    "00 Inbox/Manual Capture/README.md",
+    "00 Inbox/README.md",
+    "10 Private/README.md",
+    "20 Sources/README.md",
+    "30 Knowledge/README.md",
+    "40 Learning/Evidence/README.md",
+    "50 Work/Prometheus/README.md",
+    "50 Work/README.md",
+    "60 Daily/README.md",
+    "70 Reviews/README.md",
+    "90 System/Ledger/README.md"
+  ],
+  "exclude-link-scan": ["20 Sources/Manifests/**"]
+}

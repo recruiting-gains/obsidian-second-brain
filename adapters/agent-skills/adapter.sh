@@ -139,12 +139,13 @@ _ask_emit_core() {
     mkdir -p "$dst/references"
     cp -R "$src/references/." "$dst/references/"
   fi
-  # scripts/ + pyproject.toml (self-contained uv project)
+  # scripts/ + Python project metadata (self-contained, locked uv project)
   if [[ -d "$src/scripts" ]]; then
     mkdir -p "$dst/scripts"
     cp -R "$src/scripts/." "$dst/scripts/"
   fi
   [[ -f "$src/pyproject.toml" ]] && cp "$src/pyproject.toml" "$dst/pyproject.toml"
+  [[ -f "$src/uv.lock" ]] && cp "$src/uv.lock" "$dst/uv.lock"
 
   # SKILL.md - carries the discovery frontmatter; instructs the agent not to
   # invoke it directly. metadata.category is spec-minimal like the rest.
@@ -174,8 +175,9 @@ not a task skill - do not run it on its own.
   \`uv run --directory ${ASK_CORE_PATH} -m scripts.research.<name> ...\`
   (or \`uv run --directory ${ASK_CORE_PATH} scripts/<name>.py ...\`), run from
   your workspace root.
-- \`pyproject.toml\` - makes this directory a self-contained uv project, so both
-  modules and dependencies resolve without a separate install step.
+- \`pyproject.toml\` + \`uv.lock\` - make this directory a self-contained,
+  locked uv project, so modules and reviewed dependency versions resolve without
+  an unpinned first-use solve.
 
 If you installed the skills globally rather than into a workspace, replace
 \`${ASK_CORE_PATH}\` in those commands with the absolute path to this directory.

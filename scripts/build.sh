@@ -15,8 +15,8 @@
 # =============================================================================
 set -eo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 # shellcheck source=scripts/lib.sh
 source "$SCRIPT_DIR/lib.sh"
 
@@ -56,9 +56,25 @@ discover_platforms() {
   done
 }
 
+# A platform value reaches both an adapter path and an rm -rf target below.
+# Accept only a direct adapter-directory basename; never treat user input as a
+# path. This makes the destructive build cleanup safe even for malformed input.
+validate_platform() {
+  local requested="$1" candidate
+  [[ -n "$requested" ]] || die "Platform name must not be empty"
+  case "$requested" in
+    *"/"*|*"\\"*|*".."*) die "Invalid platform name: $requested" ;;
+  esac
+  for candidate in $(discover_platforms); do
+    [[ "$requested" == "$candidate" ]] && return 0
+  done
+  die "Unknown platform: $requested (use --help for available platforms)"
+}
+
 # ── Build a single platform ─────────────────────────────────────────────────
 build_one() {
   local platform="$1"
+  validate_platform "$platform"
   local adapter="$REPO_ROOT/adapters/$platform/adapter.sh"
 
   [[ -f "$adapter" ]] || die "Adapter not found: $adapter"
@@ -71,8 +87,22 @@ build_one() {
   # shellcheck source=/dev/null
   source "$adapter"
 
-  local dist_dir="$REPO_ROOT/dist/$platform"
-  rm -rf "$dist_dir"
+  local dist_root="$REPO_ROOT/dist"
+  [[ ! -L "$dist_root" ]] || die "Refusing symlinked build output root: $dist_root"
+  if [[ -e "$dist_root" && ! -d "$dist_root" ]]; then
+    die "Build output root is not a directory: $dist_root"
+  fi
+  mkdir -p "$dist_root"
+  local resolved_dist_root
+  resolved_dist_root="$(cd "$dist_root" && pwd -P)"
+  [[ "$resolved_dist_root" == "$dist_root" ]] || die "Refusing redirected build output root: $dist_root"
+
+  local dist_dir="$resolved_dist_root/$platform"
+  case "$dist_dir" in
+    "$resolved_dist_root/"*) ;;
+    *) die "Refusing unsafe build output path: $dist_dir" ;;
+  esac
+  rm -rf -- "$dist_dir"
   mkdir -p "$dist_dir"
 
   adapter_build "$REPO_ROOT" "$dist_dir"

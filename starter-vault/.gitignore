@@ -1,0 +1,23 @@
+# Machine-local configuration and regenerable integrations
+.brain/config.json
+.brain/backups/
+.agents/
+
+# Obsidian per-device state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/appearance.json
+.obsidian/cache
+.trash/
+
+# Secrets are never vault content
+.env
+*.env
+*.pem
+*.key
+*.p12
+*.private.json
+
+# Operating-system noise
+.DS_Store
+Thumbs.db

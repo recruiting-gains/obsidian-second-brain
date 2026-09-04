@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/schemas/learning-evidence.schema.json",
+  "title": "Forward Deployed Engineer Learning Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "competency",
+    "level",
+    "assessed_at",
+    "artifact",
+    "rubric",
+    "score",
+    "reviewed_by"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "competency": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "assessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "artifact": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rubric": {
+      "type": "string",
+      "minLength": 1
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "reviewed_by": {
+      "enum": ["self", "peer", "mentor", "automated-test", "user"]
+    },
+    "misconceptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_review": {
+      "type": "string",
+      "format": "date"
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

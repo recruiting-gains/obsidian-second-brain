@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "owner": "Cruz",
+  "timezone": "America/Chicago",
+  "privacy": {
+    "default_classification": "private-local",
+    "cloud_embedding_allowed": false,
+    "auto_publish_allowed": false,
+    "raw_archives_immutable": true
+  },
+  "sources": {
+    "github": {
+      "adapter": "github",
+      "enabled": true,
+      "account": "${GITHUB_ACCOUNT}",
+      "include_private": true,
+      "classification": "private-local",
+      "retention": "keep",
+      "limit": 1000,
+      "note_folder": "50 Work/GitHub",
+      "max_age_hours": 24
+    },
+    "chatgpt": {
+      "adapter": "chatgpt_export",
+      "enabled": false,
+      "path": "00 Inbox/ChatGPT/conversations.json",
+      "note_folder": "30 Knowledge/ChatGPT",
+      "max_items": 100000,
+      "classification": "private-local",
+      "retention": "keep",
+      "max_age_hours": 720
+    },
+    "daily-ai-news": {
+      "adapter": "inbox",
+      "enabled": true,
+      "path": "00 Inbox/AI News",
+      "note_folder": "20 Sources/Manifests/AI News",
+      "kind": "daily_ai_news",
+      "classification": "private-local",
+      "extensions": [".md", ".txt", ".json", ".html"],
+      "max_file_bytes": 10485760,
+      "retention": "keep",
+      "max_age_hours": 48
+    },
+    "images": {
+      "adapter": "inbox",
+      "enabled": true,
+      "path": "00 Inbox/Images",
+      "note_folder": "20 Sources/Manifests/Images",
+      "kind": "deliberate_image_drop",
+      "classification": "private-local",
+      "extensions": [".gif", ".heic", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"],
+      "max_file_bytes": 104857600,
+      "retention": "review",
+      "max_age_hours": 168
+    },
+    "ai-usage": {
+      "adapter": "inbox",
+      "enabled": true,
+      "path": "00 Inbox/AI Usage",
+      "note_folder": "20 Sources/Manifests/AI Usage",
+      "kind": "ai_learning_or_usage_export",
+      "classification": "private-local",
+      "extensions": [".csv", ".json", ".md", ".txt"],
+      "max_file_bytes": 52428800,
+      "retention": "keep",
+      "max_age_hours": 720
+    },
+    "prometheus": {
+      "adapter": "repository",
+      "enabled": false,
+      "path": "",
+      "title": "Prometheus AI Project",
+      "note_folder": "50 Work/Prometheus",
+      "access_mode": "read-only-metadata",
+      "classification": "private-local",
+      "retention": "keep",
+      "max_age_hours": 24
+    }
+  }
+}

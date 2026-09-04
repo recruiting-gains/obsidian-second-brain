@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/schemas/local-brain-config.schema.json",
+  "title": "Local Brain Source Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "owner", "timezone", "privacy", "sources"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["default_classification", "cloud_embedding_allowed", "auto_publish_allowed"],
+      "properties": {
+        "default_classification": {
+          "enum": ["private-local", "sensitive", "restricted"]
+        },
+        "cloud_embedding_allowed": {
+          "type": "boolean"
+        },
+        "auto_publish_allowed": {
+          "const": false
+        },
+        "raw_archives_immutable": {
+          "const": true
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["adapter", "enabled"],
+        "properties": {
+          "adapter": {
+            "enum": ["github", "chatgpt_export", "inbox", "repository"]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "max_age_hours": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "classification": {
+            "enum": ["public", "private-local", "sensitive", "restricted"]
+          },
+          "retention": {
+            "enum": ["keep", "review", "expire-derived-only", "legal-hold"]
+          }
+        }
+      }
+    }
+  }
+}
