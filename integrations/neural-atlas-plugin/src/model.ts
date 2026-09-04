@@ -54,11 +54,40 @@ export interface AtlasGraph {
 export interface AmbientParticle {
   readonly kind: "ambient-particle";
   readonly id: string;
+  /** Decorative ownership only; never a note identity or graph relation. */
+  readonly clusterId: string | null;
+  /** Present only when a decorative filament samples a real semantic edge. */
+  readonly edgeId?: string;
+  readonly accent: AtlasAccent;
+  readonly tier: "core" | "halo" | "filament" | "field";
+  readonly anchorX: number;
+  readonly anchorY: number;
   readonly x: number;
   readonly y: number;
   readonly radius: number;
   readonly alpha: number;
   readonly phase: number;
+  readonly depth: number;
+}
+
+export interface AmbientFiber {
+  readonly kind: "ambient-fiber";
+  readonly id: string;
+  /** Every visual strand is a layered rendering of this truthful semantic edge. */
+  readonly edgeId: string;
+  /** Null marks a restrained intercluster flow. */
+  readonly clusterId: string | null;
+  readonly accent: AtlasAccent;
+  readonly startX: number;
+  readonly startY: number;
+  readonly controlX: number;
+  readonly controlY: number;
+  readonly endX: number;
+  readonly endY: number;
+  readonly alpha: number;
+  readonly width: number;
+  readonly phase: number;
+  readonly signal: boolean;
 }
 
 export interface LiveNoteInput {
@@ -76,7 +105,7 @@ export interface LiveNoteInput {
 
 export interface GraphSummary {
   readonly primaryCount: number;
-  readonly primaryLabel: "sample nodes" | "notes";
+  readonly primaryLabel: "sample anchors" | "notes";
   /** Semantic edges other than literal resolved note links. */
   readonly relationCount: number;
   readonly clusterCount: number;
@@ -116,6 +145,11 @@ export const SYNTHETIC_CLUSTER_NAMES = [
 const TAU = Math.PI * 2;
 const MIN_ZOOM = 0.22;
 const MAX_ZOOM = 3.2;
+
+export const FULL_DECORATIVE_PARTICLE_COUNT = 2000;
+export const LOW_POWER_DECORATIVE_PARTICLE_COUNT = 560;
+export const FULL_SYNTHETIC_FIBER_COUNT = 456;
+export const LOW_POWER_SYNTHETIC_FIBER_COUNT = 120;
 
 const SYNTHETIC_DEFINITIONS: readonly {
   readonly name: (typeof SYNTHETIC_CLUSTER_NAMES)[number];
@@ -176,6 +210,25 @@ function seededRandom(seed: number): () => number {
     value = Math.imul(value ^ (value >>> 15), value | 1);
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
     return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function gaussian(random: () => number): number {
+  const first = Math.max(Number.EPSILON, random());
+  const second = random();
+  return Math.sqrt(-2 * Math.log(first)) * Math.cos(TAU * second);
+}
+
+function clampGaussian(random: () => number, limit = 2.8): number {
+  return clamp(gaussian(random), -limit, limit);
+}
+
+function rotateOffset(x: number, y: number, angle: number): { x: number; y: number } {
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
+  return {
+    x: x * cosine - y * sine,
+    y: x * sine + y * cosine,
   };
 }
 
@@ -314,12 +367,12 @@ function finalizeGraph(graph: AtlasGraph): AtlasGraph {
 /** A fixed, deterministic showcase that contains no vault-derived data. */
 export function buildSyntheticGraph(seed = "neural-atlas-recording-safe-v1"): AtlasGraph {
   const centers = [
-    { x: -470, y: -260 },
-    { x: 0, y: -345 },
-    { x: 470, y: -235 },
-    { x: -455, y: 270 },
-    { x: 15, y: 350 },
-    { x: 480, y: 245 },
+    { x: -430, y: -90 },
+    { x: -125, y: -215 },
+    { x: 135, y: -55 },
+    { x: -285, y: 145 },
+    { x: 15, y: 220 },
+    { x: 430, y: 75 },
   ];
   const nodes: AtlasNode[] = [];
   const clusters: AtlasCluster[] = [];
@@ -336,7 +389,7 @@ export function buildSyntheticGraph(seed = "neural-atlas-recording-safe-v1"): At
       const id = `sample:${slug(definition.name)}:${nodeIndex + 1}`;
       nodeIds.push(id);
       const angle = (nodeIndex / definition.titles.length) * TAU + random() * 0.72;
-      const orbit = nodeIndex === 0 ? 18 : 68 + random() * 96;
+      const orbit = nodeIndex === 0 ? 10 + random() * 8 : 42 + Math.pow(random(), 0.72) * 82;
       nodes.push({
         kind: "note-node",
         id,
@@ -351,7 +404,12 @@ export function buildSyntheticGraph(seed = "neural-atlas-recording-safe-v1"): At
         degree: 0,
         labelVisible: false,
       });
-      if (nodeIndex > 0) connect(edges, edgeKeys, nodeIds[0], id, "synthetic-thread");
+      if (nodeIndex > 0) {
+        // The sample topology forms a local winding path rather than a radial
+        // hub. It keeps exactly five truthful synthetic relations per cluster
+        // while allowing the decorative edge layers to read as neural fibers.
+        connect(edges, edgeKeys, nodeIds[nodeIndex - 1], id, "synthetic-thread");
+      }
     }
     clusters.push({
       id: clusterId,
@@ -472,7 +530,7 @@ export function summarizeGraph(graph: AtlasGraph): GraphSummary {
   const tagRelationCount = graph.edges.filter((edge) => edge.kind === "shared-tag").length;
   return {
     primaryCount: graph.nodes.length,
-    primaryLabel: graph.mode === "synthetic" ? "sample nodes" : "notes",
+    primaryLabel: graph.mode === "synthetic" ? "sample anchors" : "notes",
     relationCount: graph.edges.length - linkCount,
     clusterCount: graph.clusters.length,
     linkCount,
@@ -485,37 +543,250 @@ export function buildAmbientParticles(graph: AtlasGraph, lowPower: boolean): Amb
   const random = seededRandom(
     hashString(`${graph.seed}:ambient:${lowPower ? "low" : "full"}`),
   );
-  const count = lowPower ? 420 : 1280;
-  const localCount = graph.clusters.length ? Math.floor(count * 0.84) : 0;
+  const count = lowPower
+    ? LOW_POWER_DECORATIVE_PARTICLE_COUNT
+    : FULL_DECORATIVE_PARTICLE_COUNT;
+  const localCount = graph.clusters.length ? Math.floor(count * 0.97) : 0;
   const bounds = graphBounds(graph);
-  const width = Math.max(900, bounds.maxX - bounds.minX + 420);
-  const height = Math.max(620, bounds.maxY - bounds.minY + 360);
+  const width = Math.max(900, bounds.maxX - bounds.minX + 260);
+  const height = Math.max(620, bounds.maxY - bounds.minY + 220);
   const centerX = (bounds.minX + bounds.maxX) / 2;
   const centerY = (bounds.minY + bounds.maxY) / 2;
-  return Array.from({ length: count }, (_, index) => {
-    let x: number;
-    let y: number;
-    if (index < localCount) {
-      const cluster = graph.clusters[index % graph.clusters.length];
-      const angle = random() * TAU;
-      // A broad, transparent corona: dense near the cluster, never node-like.
-      const distance = 24 + Math.pow(random(), 0.68) * 285;
-      x = cluster.x + Math.cos(angle) * distance;
-      y = cluster.y + Math.sin(angle) * distance * (0.56 + random() * 0.24);
-    } else {
-      x = centerX + (random() - 0.5) * width;
-      y = centerY + (random() - 0.5) * height;
+  const particles: AmbientParticle[] = [];
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edgesByCluster = new Map<string, AtlasEdge[]>();
+  for (const edge of graph.edges) {
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+    if (!source || !target || source.clusterId !== target.clusterId) continue;
+    const bucket = edgesByCluster.get(source.clusterId) ?? [];
+    bucket.push(edge);
+    edgesByCluster.set(source.clusterId, bucket);
+  }
+
+  if (graph.clusters.length) {
+    const perCluster = Math.floor(localCount / graph.clusters.length);
+    let remainder = localCount % graph.clusters.length;
+    for (const cluster of graph.clusters) {
+      const allocation = perCluster + (remainder > 0 ? 1 : 0);
+      remainder = Math.max(0, remainder - 1);
+      const rotation = (hashString(`${graph.seed}:${cluster.id}:cloud`) / 0xffffffff) * TAU;
+      for (let localIndex = 0; localIndex < allocation; localIndex += 1) {
+        const fraction = localIndex / Math.max(1, allocation);
+        const tier: AmbientParticle["tier"] =
+          fraction < 0.5 ? "core" : fraction < 0.9 ? "halo" : "filament";
+        let offsetX: number;
+        let offsetY: number;
+        let radius: number;
+        let alpha: number;
+        let depth: number;
+        let edgeId: string | undefined;
+
+        if (tier === "core") {
+          const lobe = localIndex % 3 === 0 ? -12 : localIndex % 3 === 1 ? 11 : 0;
+          const offset = rotateOffset(
+            clampGaussian(random, 2.35) * 88 + lobe * 1.8,
+            clampGaussian(random, 2.35) * 66,
+            rotation,
+          );
+          offsetX = offset.x;
+          offsetY = offset.y;
+          const centerStrength = 1 - Math.min(1, Math.hypot(offsetX / 120, offsetY / 92));
+          radius = 0.9 + random() * 1.1;
+          alpha = 0.5 + random() * 0.28 + centerStrength * 0.12;
+          depth = 1.6 + random() * 1.4;
+        } else if (tier === "halo") {
+          const outer = localIndex % 11 === 0 ? 1.28 : 1;
+          const offset = rotateOffset(
+            clampGaussian(random, 2.15) * 164 * outer,
+            clampGaussian(random, 2.15) * 124 * outer,
+            rotation,
+          );
+          offsetX = offset.x;
+          offsetY = offset.y;
+          const distance = Math.hypot(offsetX / 250, offsetY / 180);
+          radius = 0.5 + random() * 0.62;
+          alpha = Math.max(0.2, 0.55 - distance * 0.16 + random() * 0.16);
+          depth = 0.75 + random() * 1.3;
+        } else {
+          const clusterEdges = edgesByCluster.get(cluster.id) ?? [];
+          const edge = clusterEdges[localIndex % Math.max(1, clusterEdges.length)];
+          const source = edge ? nodeById.get(edge.source) : undefined;
+          const target = edge ? nodeById.get(edge.target) : undefined;
+          if (edge && source && target) {
+            const deltaX = target.x - source.x;
+            const deltaY = target.y - source.y;
+            const distance = Math.max(1, Math.hypot(deltaX, deltaY));
+            const normalX = -deltaY / distance;
+            const normalY = deltaX / distance;
+            const direction = localIndex % 2 === 0 ? 1 : -1;
+            const bend = direction * (18 + distance * (0.12 + random() * 0.12));
+            const controlX = (source.x + target.x) / 2 + normalX * bend;
+            const controlY = (source.y + target.y) / 2 + normalY * bend;
+            const progress = 0.04 + random() * 0.92;
+            const inverse = 1 - progress;
+            const perpendicularNoise = clampGaussian(random, 2.2) * 4.8;
+            offsetX =
+              inverse * inverse * source.x +
+              2 * inverse * progress * controlX +
+              progress * progress * target.x +
+              normalX * perpendicularNoise -
+              cluster.x;
+            offsetY =
+              inverse * inverse * source.y +
+              2 * inverse * progress * controlY +
+              progress * progress * target.y +
+              normalY * perpendicularNoise -
+              cluster.y;
+            edgeId = edge.id;
+          } else {
+            const angle = rotation + random() * TAU;
+            const distance = 48 + Math.pow(random(), 0.68) * 145;
+            offsetX = Math.cos(angle) * distance;
+            offsetY = Math.sin(angle) * distance * 0.74;
+          }
+          radius = 0.5 + random() * 0.8;
+          alpha = 0.3 + random() * 0.4;
+          depth = 1 + random() * 1.8;
+        }
+
+        particles.push({
+          kind: "ambient-particle",
+          id: `ambient:${particles.length + 1}`,
+          clusterId: cluster.id,
+          ...(edgeId ? { edgeId } : {}),
+          accent: (() => {
+            const colorRoll = random();
+            if (colorRoll < 0.62) return "violet";
+            if (colorRoll < 0.86) return "lavender";
+            return cluster.accent;
+          })(),
+          tier,
+          anchorX: cluster.x,
+          anchorY: cluster.y,
+          x: cluster.x + offsetX,
+          y: cluster.y + offsetY,
+          radius,
+          alpha: clamp(alpha, 0.08, 0.94),
+          phase: random() * TAU,
+          depth,
+        });
+      }
     }
-    return {
-      kind: "ambient-particle" as const,
-      id: `ambient:${index + 1}`,
-      x,
-      y,
-      radius: 0.34 + random() * 0.78,
-      alpha: 0.025 + random() * 0.105,
+  }
+
+  while (particles.length < count) {
+    const cluster = graph.clusters[particles.length % Math.max(1, graph.clusters.length)];
+    particles.push({
+      kind: "ambient-particle",
+      id: `ambient:${particles.length + 1}`,
+      clusterId: null,
+      accent: cluster?.accent ?? "lavender",
+      tier: "field",
+      anchorX: centerX,
+      anchorY: centerY,
+      x: centerX + (random() - 0.5) * width,
+      y: centerY + (random() - 0.5) * height,
+      radius: 0.34 + random() * 0.52,
+      alpha: 0.035 + random() * 0.065,
       phase: random() * TAU,
-    };
+      depth: 0.35 + random() * 0.65,
+    });
+  }
+
+  return particles;
+}
+
+/**
+ * Layered fibers add visual connective tissue without inventing relationships.
+ * Every strand maps back to one existing semantic edge; multiple strands are
+ * styling layers, never additional relations.
+ */
+export function buildAmbientFibers(graph: AtlasGraph, lowPower: boolean): AmbientFiber[] {
+  if (graph.edges.length === 0) return [];
+  const random = seededRandom(
+    hashString(`${graph.seed}:fibers:${lowPower ? "low" : "full"}`),
+  );
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const validEdges = graph.edges.filter(
+    (edge) => nodeById.has(edge.source) && nodeById.has(edge.target),
+  );
+  const budget = lowPower ? LOW_POWER_SYNTHETIC_FIBER_COUNT : FULL_SYNTHETIC_FIBER_COUNT;
+  const targetLayers = validEdges.map((edge) => {
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+    const sameCluster = source?.clusterId === target?.clusterId;
+    return sameCluster ? (lowPower ? 3 : 14) : lowPower ? 5 : 6;
   });
+  const allocation = validEdges.map(() => 0);
+  let allocated = 0;
+  while (allocated < budget) {
+    let progressed = false;
+    for (let index = 0; index < validEdges.length && allocated < budget; index += 1) {
+      if (allocation[index] >= targetLayers[index]) continue;
+      allocation[index] += 1;
+      allocated += 1;
+      progressed = true;
+    }
+    if (!progressed) break;
+  }
+
+  const fibers: AmbientFiber[] = [];
+
+  for (let edgeIndex = 0; edgeIndex < validEdges.length; edgeIndex += 1) {
+    const edge = validEdges[edgeIndex];
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+    if (!source || !target) continue;
+    const layerCount = allocation[edgeIndex];
+    const sameCluster = source.clusterId === target.clusterId;
+    const deltaX = target.x - source.x;
+    const deltaY = target.y - source.y;
+    const distance = Math.max(1, Math.hypot(deltaX, deltaY));
+    const normalX = -deltaY / distance;
+    const normalY = deltaX / distance;
+    for (let layer = 0; layer < layerCount; layer += 1) {
+      const centeredLayer = layer - (layerCount - 1) / 2;
+      const endpointSpread = centeredLayer * (sameCluster ? 0.72 : 0.48);
+      const endpointNoise = (random() - 0.5) * (sameCluster ? 3.2 : 2);
+      const offset = endpointSpread + endpointNoise;
+      const direction = (edgeIndex + layer) % 2 === 0 ? 1 : -1;
+      const bend = direction * (
+        sameCluster
+          ? 24 + distance * (0.18 + random() * 0.14) + Math.abs(centeredLayer) * 1.85
+          : 30 + distance * (0.055 + random() * 0.045) + Math.abs(centeredLayer) * 2.2
+      );
+      const startX = source.x + normalX * offset;
+      const startY = source.y + normalY * offset;
+      const endX = target.x + normalX * offset * 0.72;
+      const endY = target.y + normalY * offset * 0.72;
+      fibers.push({
+        kind: "ambient-fiber",
+        id: `ambient-fiber:${fibers.length + 1}`,
+        edgeId: edge.id,
+        clusterId: sameCluster ? source.clusterId : null,
+        accent: sameCluster
+          ? source.accent
+          : edge.kind === "link"
+            ? "cyan"
+            : edge.kind === "shared-tag"
+              ? "amber"
+              : "lavender",
+        startX,
+        startY,
+        controlX: (startX + endX) / 2 + normalX * bend,
+        controlY: (startY + endY) / 2 + normalY * bend,
+        endX,
+        endY,
+        alpha: sameCluster ? 0.055 + random() * 0.1 : 0.022 + random() * 0.04,
+        width: sameCluster ? 0.36 + random() * 0.42 : 0.38 + random() * 0.3,
+        phase: random(),
+        signal: layer === 0 && edgeIndex % (lowPower ? 7 : 4) === 0,
+      });
+    }
+  }
+
+  return fibers;
 }
 
 export function graphBounds(graph: AtlasGraph): GraphBounds {
@@ -534,9 +805,10 @@ export function graphBounds(graph: AtlasGraph): GraphBounds {
 
 /**
  * Recompose cluster centers for a narrow portrait viewport. This is not a
- * scale-down of the desktop map: clusters become a tall two-column field and
- * each local constellation follows its new center. Counts and identities stay
- * unchanged. Wider or landscape viewports return the original graph.
+ * scale-down of the desktop map: the synthetic showcase becomes a staggered,
+ * overlapping vertical mass, while arbitrary live graphs use a responsive
+ * column layout. Counts and identities stay unchanged. Wider or landscape
+ * viewports return the original graph.
  */
 export function composeGraphForViewport(
   graph: AtlasGraph,
@@ -547,18 +819,32 @@ export function composeGraphForViewport(
   if (!portrait || graph.clusters.length < 2) return graph;
 
   const columns = viewportWidth < 410 ? 1 : 2;
-  const columnGap = columns === 1 ? 0 : 370;
-  const rowGap = columns === 1 ? 390 : 470;
-  const rows = Math.ceil(graph.clusters.length / columns);
   const newCenters = new Map<string, { x: number; y: number }>();
-  graph.clusters.forEach((cluster, index) => {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    newCenters.set(cluster.id, {
-      x: (column - (columns - 1) / 2) * columnGap,
-      y: (row - (rows - 1) / 2) * rowGap,
+  if (graph.mode === "synthetic" && graph.clusters.length === 6) {
+    const showcaseCenters = [
+      { x: -100, y: -300 },
+      { x: 100, y: -220 },
+      { x: -105, y: -60 },
+      { x: 105, y: 20 },
+      { x: -90, y: 180 },
+      { x: 90, y: 260 },
+    ];
+    graph.clusters.forEach((cluster, index) => {
+      newCenters.set(cluster.id, showcaseCenters[index]);
     });
-  });
+  } else {
+    const columnGap = columns === 1 ? 0 : 330;
+    const rowGap = columns === 1 ? 310 : 360;
+    const rows = Math.ceil(graph.clusters.length / columns);
+    graph.clusters.forEach((cluster, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      newCenters.set(cluster.id, {
+        x: (column - (columns - 1) / 2) * columnGap,
+        y: (row - (rows - 1) / 2) * rowGap,
+      });
+    });
+  }
 
   const oldCenters = new Map(graph.clusters.map((cluster) => [cluster.id, cluster]));
   const clusters = graph.clusters.map((cluster) => {
@@ -571,8 +857,12 @@ export function composeGraphForViewport(
     if (!oldCenter || !newCenter) return { ...node };
     return {
       ...node,
-      x: newCenter.x + (node.x - oldCenter.x) * (columns === 1 ? 0.72 : 0.78),
-      y: newCenter.y + (node.y - oldCenter.y) * 0.82,
+      x:
+        newCenter.x +
+        (node.x - oldCenter.x) * (graph.mode === "synthetic" ? 0.58 : columns === 1 ? 0.52 : 0.58),
+      y:
+        newCenter.y +
+        (node.y - oldCenter.y) * (graph.mode === "synthetic" ? 0.68 : columns === 1 ? 0.56 : 0.68),
     };
   });
   return { ...graph, nodes, clusters };

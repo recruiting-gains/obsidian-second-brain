@@ -14,8 +14,9 @@ It deliberately offers two different modes:
   It never calls `read()` or `cachedRead()` and never receives note bodies.
 
 The mode disclosure and the bottom counts describe the graph currently on
-screen. Ambient halo particles are a separate renderer-only type; they are not
-nodes, cannot be focused, and are never included in note or sample-node counts.
+screen. The particle field is a separate renderer-only type; its layered fibers
+trace only existing semantic edges. Neither can be focused or included in note,
+sample-anchor, link, or relation counts.
 
 ## Interaction
 
@@ -36,9 +37,12 @@ always disables animation. Auto quality reduces particles, glow work, pixel
 density, and frame rate on lower-power devices without hiding graph nodes or
 changing the truthful counts.
 
-Full quality uses 1,280 deterministic ambient dust particles and low-power
-quality uses 420. Most are distributed around cluster halos with a smaller
-interstitial field. They remain dim renderer decoration rather than graph data.
+Full quality uses 2,000 deterministic decorative particles and low-power
+quality uses 560. Center-heavy Gaussian clouds form the luminous cluster mass,
+with a smaller interstitial field. Full quality layers 456 fine visual strands
+over the 36 truthful synthetic relations; low-power uses 120 strands. Every
+strand resolves to an existing graph edge, so visual richness never invents
+topology. Particles and strands remain renderer decoration rather than graph data.
 
 ## Architecture
 

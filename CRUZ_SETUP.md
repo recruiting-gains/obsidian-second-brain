@@ -93,20 +93,24 @@ Sync and Publish core plugins; enabling either is a separate privacy and backup 
 The sanitized starter includes the source-built, local `Neural Atlas` plugin. It is not downloaded
 from a marketplace and has no runtime dependency, telemetry, API key, remote font, or external asset.
 If Obsidian asks before loading a locally installed plugin, review the included files and enable
-**Neural Atlas** under **Settings → Community plugins**. Use the network-shaped ribbon icon or run
-**Neural Atlas: Open Neural Atlas** from the command palette.
+**Neural Atlas** under **Settings → Community plugins**. For normal private use, the network-shaped
+ribbon icon or **Neural Atlas: Open Neural Atlas** resumes the last selected mode. For any public
+capture, run **Neural Atlas: Open recording-safe showcase** from the command palette; it applies the
+synthetic graph before revealing the Atlas tab.
 
 The intended showcase opens in **Synthetic recording-safe** mode. That mode is deterministic and
 does not query the vault at all. **Live metadata** mode uses only Markdown file metadata already held
 by Obsidian: vault-relative paths, folders, resolved links, tags, and frontmatter. It does not read
-note bodies, send data anywhere, or include decorative halo particles in note/link counts. The HUD
-always labels which mode is active and whether its numbers are synthetic or live.
+note bodies, send data anywhere, or include the 2,000 full-quality decorative particles in
+note/link/relation counts. Layered visual fibers trace only existing edges. The HUD always labels
+which mode is active, which counts are synthetic or live, and that the ambient field is visual only.
 
 For a privacy-safe recording, keep the view in its amber-labeled recording-safe mode, collapse
 unrelated sidebars, hide notifications, and verify the top HUD says `SYNTHETIC` before capture. Never
 record the global graph, quick switcher, live metadata mode, source folders, or private notes. The
 commands and visible controls can fit the graph, reset its layout, pause motion, hide labels, and
-return to the safe showcase.
+return to the safe showcase. The general ribbon/command opener is not the public-demo entrypoint
+because it intentionally resumes the last mode.
 
 Rollback is one switch: disable **Neural Atlas** under **Settings → Community plugins**. Ordinary
 Markdown notes, Canvas files, source records, and privacy controls do not depend on the view. The

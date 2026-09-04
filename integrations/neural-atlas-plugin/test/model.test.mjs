@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
+  FULL_DECORATIVE_PARTICLE_COUNT,
+  FULL_SYNTHETIC_FIBER_COUNT,
+  LOW_POWER_DECORATIVE_PARTICLE_COUNT,
+  LOW_POWER_SYNTHETIC_FIBER_COUNT,
   SYNTHETIC_CLUSTER_NAMES,
+  buildAmbientFibers,
   buildAmbientParticles,
   buildLiveGraph,
   buildSyntheticGraph,
@@ -44,7 +49,7 @@ test("a seed changes positions, not the synthetic identities or truthful counts"
   );
   assert.deepEqual(summarizeGraph(first), {
     primaryCount: 36,
-    primaryLabel: "sample nodes",
+    primaryLabel: "sample anchors",
     relationCount: first.edges.length,
     clusterCount: 6,
     linkCount: 0,
@@ -52,28 +57,112 @@ test("a seed changes positions, not the synthetic identities or truthful counts"
   });
 });
 
-test("ambient halo dust is dense, separate, deterministic, and never counted as notes", () => {
+test("ambient cloud particles are dense, separate, deterministic, and never counted as notes", () => {
   const graph = buildSyntheticGraph();
   const before = summarizeGraph(graph);
   const full = buildAmbientParticles(graph, false);
   const low = buildAmbientParticles(graph, true);
 
-  assert.equal(full.length, 1280);
-  assert.equal(low.length, 420);
+  assert.equal(full.length, FULL_DECORATIVE_PARTICLE_COUNT);
+  assert.equal(low.length, LOW_POWER_DECORATIVE_PARTICLE_COUNT);
+  assert.ok(full.length >= 1200 && full.length <= 2000);
+  assert.ok(low.length < full.length * 0.35);
   assert.deepEqual(full, buildAmbientParticles(graph, false));
   assert.ok(full.every((particle) => particle.kind === "ambient-particle"));
-  assert.ok(full.every((particle) => particle.radius < 1.2));
-  assert.equal(
-    full.filter((particle) =>
-      graph.clusters.some(
-        (cluster) => Math.hypot(particle.x - cluster.x, particle.y - cluster.y) <= 300,
-      ),
-    ).length >= 1070,
-    true,
+  assert.ok(full.every((particle) => particle.radius > 0 && particle.radius <= 2));
+  assert.ok(full.every((particle) => particle.alpha > 0 && particle.alpha <= 0.94));
+  assert.ok(full.every((particle) => Number.isFinite(particle.x) && Number.isFinite(particle.y)));
+  const owned = full.filter((particle) => particle.clusterId !== null);
+  assert.ok(owned.length >= full.length * 0.96 && owned.length <= full.length * 0.98);
+  assert.deepEqual(new Set(owned.map((particle) => particle.tier)), new Set(["core", "halo", "filament"]));
+  const clusterIds = new Set(graph.clusters.map((cluster) => cluster.id));
+  const edgeIds = new Set(graph.edges.map((edge) => edge.id));
+  assert.ok(owned.every((particle) => clusterIds.has(particle.clusterId)));
+  assert.ok(
+    owned
+      .filter((particle) => particle.tier === "filament")
+      .every((particle) => particle.edgeId && edgeIds.has(particle.edgeId)),
+    "every filament particle must decorate a real semantic edge",
   );
+  for (const cluster of graph.clusters) {
+    const local = owned.filter((particle) => particle.clusterId === cluster.id);
+    const core = local.filter((particle) => particle.tier === "core");
+    assert.ok(
+      Math.abs(local.length - owned.length / graph.clusters.length) <= 1,
+      `${cluster.label} should receive an equal decorative quota`,
+    );
+    assert.ok(
+      core.filter((particle) => Math.hypot(particle.x - cluster.x, particle.y - cluster.y) <= 88)
+        .length >= core.length * 0.3,
+      `${cluster.label} should have a filled luminous center`,
+    );
+  }
   const nodeIds = new Set(graph.nodes.map((node) => node.id));
   assert.ok(full.every((particle) => !nodeIds.has(particle.id)));
   assert.deepEqual(summarizeGraph(graph), before);
+});
+
+test("fiber layers are deterministic renderings of real semantic edges, never invented topology", () => {
+  const graph = buildSyntheticGraph();
+  const full = buildAmbientFibers(graph, false);
+  const low = buildAmbientFibers(graph, true);
+  const edgeIds = new Set(graph.edges.map((edge) => edge.id));
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edgeById = new Map(graph.edges.map((edge) => [edge.id, edge]));
+
+  assert.equal(full.length, FULL_SYNTHETIC_FIBER_COUNT);
+  assert.equal(low.length, LOW_POWER_SYNTHETIC_FIBER_COUNT);
+  assert.deepEqual(full, buildAmbientFibers(graph, false));
+  assert.deepEqual(new Set(full.map((fiber) => fiber.edgeId)), edgeIds);
+  assert.deepEqual(new Set(low.map((fiber) => fiber.edgeId)), edgeIds);
+  assert.ok(full.every((fiber) => fiber.kind === "ambient-fiber"));
+  assert.ok(full.every((fiber) => edgeIds.has(fiber.edgeId)));
+  assert.ok(full.every((fiber) => fiber.width >= 0.36 && fiber.width <= 0.78));
+  assert.ok(
+    full.every((fiber) =>
+      [
+        fiber.startX,
+        fiber.startY,
+        fiber.controlX,
+        fiber.controlY,
+        fiber.endX,
+        fiber.endY,
+      ].every(Number.isFinite),
+    ),
+  );
+  for (const fiber of full) {
+    const edge = edgeById.get(fiber.edgeId);
+    const source = edge && nodeById.get(edge.source);
+    const target = edge && nodeById.get(edge.target);
+    assert.ok(source && target);
+    assert.ok(Math.hypot(fiber.startX - source.x, fiber.startY - source.y) < 8);
+    assert.ok(Math.hypot(fiber.endX - target.x, fiber.endY - target.y) < 8);
+  }
+  for (const cluster of graph.clusters) {
+    const localEdges = graph.edges.filter((edge) => {
+      const source = nodeById.get(edge.source);
+      const target = nodeById.get(edge.target);
+      return source?.clusterId === cluster.id && target?.clusterId === cluster.id;
+    });
+    const localDegrees = new Map(cluster.nodeIds.map((id) => [id, 0]));
+    for (const edge of localEdges) {
+      localDegrees.set(edge.source, (localDegrees.get(edge.source) ?? 0) + 1);
+      localDegrees.set(edge.target, (localDegrees.get(edge.target) ?? 0) + 1);
+    }
+    assert.equal(localEdges.length, 5);
+    assert.ok(
+      [...localDegrees.values()].every((degree) => degree <= 2),
+      `${cluster.label} should remain a winding path, not a radial starburst`,
+    );
+  }
+  assert.deepEqual(summarizeGraph(graph), {
+    primaryCount: 36,
+    primaryLabel: "sample anchors",
+    relationCount: 36,
+    clusterCount: 6,
+    linkCount: 0,
+    tagRelationCount: 0,
+  });
 });
 
 const LIVE_INPUT = [
@@ -171,11 +260,31 @@ test("portrait composition is a deterministic reflow rather than a scaled deskto
     graph.nodes.map((node) => node.id),
   );
   assert.equal(summarizeGraph(portrait).primaryCount, 36);
-  assert.equal(new Set(portrait.clusters.map((cluster) => cluster.x)).size, 2);
+  assert.deepEqual(
+    portrait.clusters.map((cluster) => [cluster.x, cluster.y]),
+    [
+      [-100, -300],
+      [100, -220],
+      [-105, -60],
+      [105, 20],
+      [-90, 180],
+      [90, 260],
+    ],
+  );
   assert.ok(graph.clusters.some((cluster, index) => cluster.y !== portrait.clusters[index].y));
 
   const narrow = composeGraphForViewport(graph, 390, 840);
-  assert.equal(new Set(narrow.clusters.map((cluster) => cluster.x)).size, 1);
+  assert.deepEqual(
+    narrow.clusters.map((cluster) => [cluster.x, cluster.y]),
+    [
+      [-100, -300],
+      [100, -220],
+      [-105, -60],
+      [105, 20],
+      [-90, 180],
+      [90, 260],
+    ],
+  );
   assert.deepEqual(graph, buildSyntheticGraph(), "portrait composition mutated the source graph");
 });
 
@@ -241,6 +350,7 @@ test("the shipped host stays metadata-only and the UI has no runtime network or 
 
 test("recording-safe mode is applied before a view can reveal or persist", () => {
   const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
+  const renderer = readFileSync(new URL("../src/renderer.ts", import.meta.url), "utf8");
 
   assert.match(main, /const SAFE_INITIAL_MODE: AtlasMode = "synthetic"/);
   assert.match(main, /this\.mode = SAFE_INITIAL_MODE/);
@@ -267,5 +377,30 @@ test("recording-safe mode is applied before a view can reveal or persist", () =>
     setMode.indexOf("this.renderer?.setGraph(this.buildGraph())") <
       setMode.indexOf("await this.plugin.setLastMode(mode)"),
     "the visible graph must be scrubbed before mode persistence",
+  );
+
+  const replaceGraph = renderer.slice(
+    renderer.indexOf("  setGraph("),
+    renderer.indexOf("  setPreferences("),
+  );
+  assert.match(
+    replaceGraph,
+    /this\.canvas\.setAttribute\("aria-label", DEFAULT_CANVAS_ARIA_LABEL\)/,
+    "graph replacement must synchronously clear any live title/path from the ARIA label",
+  );
+  assert.ok(
+    replaceGraph.indexOf('this.canvas.setAttribute("aria-label", DEFAULT_CANVAS_ARIA_LABEL)') <
+      replaceGraph.indexOf("this.updateHud()"),
+    "ARIA state must be generic before replacement HUD state is exposed",
+  );
+  assert.match(
+    replaceGraph,
+    /if \(graph\.mode === "synthetic"\) \{[\s\S]*?this\.paint\(performance\.now\(\)\)/,
+    "recording-safe replacement must synchronously overwrite live canvas pixels",
+  );
+  assert.doesNotMatch(
+    replaceGraph,
+    /node\.(?:title|path)/,
+    "safe graph replacement must not derive any visible or ARIA text from a prior live node",
   );
 });

@@ -1450,6 +1450,18 @@ def test_neural_atlas_package_is_local_private_and_recording_safe():
     assert open_atlas.index("await leaf.view.setMode(mode)") < open_atlas.index(
         "await workspace.revealLeaf(leaf)"
     )
+    renderer_set_graph = renderer_source[
+        renderer_source.index("  setGraph(") : renderer_source.index(
+            "  setPreferences("
+        )
+    ]
+    assert 'this.canvas.setAttribute("aria-label", DEFAULT_CANVAS_ARIA_LABEL)' in (
+        renderer_set_graph
+    )
+    assert 'if (graph.mode === "synthetic")' in renderer_set_graph
+    assert "this.paint(performance.now())" in renderer_set_graph
+    assert "node.title" not in renderer_set_graph
+    assert "node.path" not in renderer_set_graph
     set_mode = main_source[
         main_source.index("  async setMode(") : main_source.index(
             "  async toggleMode("
@@ -1462,13 +1474,25 @@ def test_neural_atlas_package_is_local_private_and_recording_safe():
     assert "classification: public" in runbook
     assert "30-45 second" in runbook
     assert "SYNTHETIC" in runbook
+    assert "Neural Atlas: Open recording-safe showcase" in runbook
+    assert "Neural Atlas: Open Neural Atlas" in runbook
+    assert "general openers resume the last selected mode" in runbook
+    assert runbook.index("Neural Atlas: Open recording-safe showcase") < runbook.index(
+        "Neural Atlas: Open Neural Atlas"
+    )
     assert "90 System/Runbooks/Recording Neural Atlas" in home
-    assert "sample nodes" in bundle
+    assert "sample anchors" in bundle
     assert 'callback: () => void this.openAtlas("synthetic")' in main_source
-    assert "1280" in model_source and "420" in model_source
+    assert "FULL_DECORATIVE_PARTICLE_COUNT = 2000" in model_source
+    assert "LOW_POWER_DECORATIVE_PARTICLE_COUNT = 560" in model_source
+    assert "FULL_SYNTHETIC_FIBER_COUNT = 456" in model_source
+    assert "LOW_POWER_SYNTHETIC_FIBER_COUNT = 120" in model_source
+    assert "edgeId: edge.id" in model_source
     for forbidden in (
         "/users/",
         "a1smatrix",
+        "atsmatrix",
+        "instagram",
         "instagram.com",
         "api_key",
         "access_token",
