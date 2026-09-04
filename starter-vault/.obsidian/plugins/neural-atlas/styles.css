@@ -1,0 +1,389 @@
+/* Fully scoped custom-view styles. No fonts, images, URLs, or remote assets. */
+
+.workspace-leaf-content[data-type="neural-atlas-view"] .view-content,
+.neural-atlas-view {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #04050d;
+}
+
+.neural-atlas-root {
+  --na-violet: #a169ff;
+  --na-lavender: #d6beff;
+  --na-cyan: #5bdee7;
+  --na-amber: #f2b456;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  overflow: hidden;
+  color: rgba(244, 239, 255, 0.92);
+  background: #04050d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.neural-atlas-root::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 110px rgba(0, 0, 0, 0.72),
+    inset 0 1px rgba(219, 199, 255, 0.05);
+}
+
+.neural-atlas-canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.neural-atlas-canvas.is-panning {
+  cursor: grabbing;
+}
+
+.neural-atlas-canvas:focus-visible {
+  outline: 1px solid rgba(161, 105, 255, 0.58);
+  outline-offset: -3px;
+}
+
+.neural-atlas-hud {
+  position: absolute;
+  z-index: 4;
+  left: clamp(9px, 1.4vw, 20px);
+  right: clamp(9px, 1.4vw, 20px);
+  pointer-events: none;
+  font-size: 8px;
+  letter-spacing: 0.035em;
+}
+
+/* One slim rail, rather than a title card plus a controls card. */
+.neural-atlas-hud--top {
+  top: clamp(9px, 1.4vw, 18px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 5px 7px;
+  border: 1px solid rgba(191, 159, 244, 0.14);
+  border-radius: 8px;
+  background: rgba(5, 6, 15, 0.77);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.neural-atlas-identity {
+  display: grid;
+  grid-template-columns: auto minmax(130px, 1fr) auto;
+  grid-template-areas:
+    "title disclosure summary"
+    "kicker disclosure summary";
+  align-items: center;
+  gap: 1px 12px;
+  min-width: 0;
+}
+
+.neural-atlas-kicker {
+  grid-area: kicker;
+  color: rgba(101, 221, 230, 0.72);
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+}
+
+.neural-atlas-title-line {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.neural-atlas-title {
+  flex: 0 0 auto;
+  color: rgba(251, 249, 255, 0.96);
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.neural-atlas-mode-badge {
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 6px;
+  border: 1px solid rgba(242, 180, 86, 0.3);
+  border-radius: 999px;
+  color: rgba(248, 192, 102, 0.92);
+  background: rgba(69, 43, 14, 0.18);
+  font-size: 7px;
+  font-weight: 680;
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neural-atlas-root:not(.is-recording-safe) .neural-atlas-mode-badge {
+  border-color: rgba(91, 222, 231, 0.27);
+  color: rgba(112, 230, 235, 0.9);
+  background: rgba(18, 65, 73, 0.17);
+}
+
+.neural-atlas-disclosure {
+  grid-area: disclosure;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(206, 193, 229, 0.52);
+  font-size: 8px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neural-atlas-top-summary {
+  grid-area: summary;
+  color: rgba(220, 204, 245, 0.7);
+  font-size: 8px;
+  line-height: 1.35;
+  text-align: right;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neural-atlas-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: min(430px, 40vw);
+  padding-left: 9px;
+  border-left: 1px solid rgba(191, 159, 244, 0.12);
+  pointer-events: auto;
+}
+
+.neural-atlas-control {
+  min-height: 24px;
+  margin: 0;
+  padding: 4px 7px;
+  border: 1px solid rgba(183, 149, 239, 0.14);
+  border-radius: 6px;
+  color: rgba(225, 215, 243, 0.66);
+  background: rgba(25, 20, 43, 0.22);
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 580;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+.neural-atlas-control:hover,
+.neural-atlas-control:focus-visible {
+  border-color: rgba(172, 126, 255, 0.42);
+  color: rgba(251, 248, 255, 0.95);
+  background: rgba(78, 48, 128, 0.32);
+}
+
+.neural-atlas-control[aria-pressed="true"] {
+  border-color: rgba(161, 105, 255, 0.36);
+  color: rgba(224, 205, 255, 0.95);
+  background: rgba(94, 53, 158, 0.28);
+}
+
+.neural-atlas-hud--bottom {
+  bottom: clamp(9px, 1.4vw, 17px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 27px;
+  padding: 5px 9px;
+  border: 1px solid rgba(191, 159, 244, 0.12);
+  border-radius: 8px;
+  color: rgba(211, 198, 234, 0.54);
+  background: rgba(6, 7, 16, 0.72);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.neural-atlas-counts {
+  flex: 0 0 auto;
+  color: rgba(211, 191, 245, 0.74);
+  text-transform: uppercase;
+}
+
+.neural-atlas-focus {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neural-atlas-runtime {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(195, 181, 220, 0.48);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 48%;
+}
+
+.neural-atlas-root.is-recording-safe .neural-atlas-counts::before {
+  content: "SAFE  ";
+  color: var(--na-amber);
+}
+
+.neural-atlas-root:not(.is-recording-safe) .neural-atlas-counts::before {
+  content: "LOCAL  ";
+  color: var(--na-cyan);
+}
+
+.neural-atlas-root.is-low-power .neural-atlas-kicker::after {
+  content: " · LOW POWER";
+  color: rgba(242, 180, 86, 0.66);
+}
+
+@media (max-width: 920px) {
+  .neural-atlas-disclosure {
+    display: none;
+  }
+
+  .neural-atlas-identity {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "title summary"
+      "kicker summary";
+  }
+}
+
+@media (max-width: 680px) {
+  .neural-atlas-hud--top {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .neural-atlas-identity {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "summary";
+    gap: 3px;
+  }
+
+  .neural-atlas-kicker,
+  .neural-atlas-disclosure {
+    display: none;
+  }
+
+  .neural-atlas-top-summary {
+    overflow: visible;
+    text-align: left;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .neural-atlas-controls {
+    justify-content: flex-start;
+    width: 100%;
+    max-width: none;
+    padding: 4px 0 0;
+    border-top: 1px solid rgba(191, 159, 244, 0.1);
+    border-left: 0;
+  }
+
+  .neural-atlas-control {
+    flex: 1 1 auto;
+    min-height: 22px;
+    padding-inline: 5px;
+    font-size: 7px;
+  }
+
+  .neural-atlas-hud--bottom {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+
+  .neural-atlas-focus {
+    flex: 1 1 58%;
+  }
+
+  .neural-atlas-runtime {
+    flex: 1 1 100%;
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
+@media (max-width: 410px) {
+  .neural-atlas-hud {
+    left: 7px;
+    right: 7px;
+  }
+
+  .neural-atlas-hud--top {
+    top: 7px;
+  }
+
+  .neural-atlas-title {
+    font-size: 9px;
+  }
+
+  .neural-atlas-mode-badge {
+    font-size: 6px;
+  }
+
+  .neural-atlas-top-summary,
+  .neural-atlas-hud--bottom {
+    font-size: 7px;
+  }
+
+  .neural-atlas-hud--bottom {
+    bottom: 7px;
+  }
+}
+
+@media (max-height: 500px) {
+  .neural-atlas-kicker,
+  .neural-atlas-disclosure,
+  .neural-atlas-focus {
+    display: none;
+  }
+
+  .neural-atlas-hud--top {
+    top: 6px;
+  }
+
+  .neural-atlas-hud--bottom {
+    bottom: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neural-atlas-control {
+    transition: none;
+  }
+}

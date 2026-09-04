@@ -1329,7 +1329,7 @@ def test_template_sentinels_are_balanced():
         assert content.count(USER_START) == content.count(USER_END), note
 
 
-def test_neural_glass_layer_is_reversible_plugin_free_and_network_free():
+def test_prior_neural_glass_layer_remains_reversible_and_network_free():
     template = REPO_ROOT / "starter-vault"
     appearance = json.loads(
         (template / ".obsidian/appearance.json").read_text(encoding="utf-8")
@@ -1343,7 +1343,7 @@ def test_neural_glass_layer_is_reversible_plugin_free_and_network_free():
     css_lower = css.lower()
 
     assert appearance["theme"] == "obsidian"
-    assert appearance["enabledCssSnippets"] == ["prometheus-neural-glass"]
+    assert appearance["enabledCssSnippets"] == []
     assert appearance["accentColor"].lower() == "#8b5cf6"
     assert core_plugins["sync"] is False
     assert core_plugins["publish"] is False
@@ -1366,6 +1366,117 @@ def test_neural_glass_layer_is_reversible_plugin_free_and_network_free():
         assert token in css
     for forbidden in ("@import", "@font-face", "url(", "http://", "https://"):
         assert forbidden not in css_lower
+
+
+def test_neural_atlas_package_is_local_private_and_recording_safe():
+    template = REPO_ROOT / "starter-vault"
+    integration = REPO_ROOT / "integrations/neural-atlas-plugin"
+    installed = template / ".obsidian/plugins/neural-atlas"
+
+    appearance = json.loads(
+        (template / ".obsidian/appearance.json").read_text(encoding="utf-8")
+    )
+    core_plugins = json.loads(
+        (template / ".obsidian/core-plugins.json").read_text(encoding="utf-8")
+    )
+    community_plugins = json.loads(
+        (template / ".obsidian/community-plugins.json").read_text(encoding="utf-8")
+    )
+    settings = json.loads((installed / "data.json").read_text(encoding="utf-8"))
+    manifest = json.loads((installed / "manifest.json").read_text(encoding="utf-8"))
+    source_manifest = json.loads(
+        (integration / "manifest.json").read_text(encoding="utf-8")
+    )
+    main_source = (integration / "src/main.ts").read_text(encoding="utf-8")
+    renderer_source = (integration / "src/renderer.ts").read_text(encoding="utf-8")
+    model_source = (integration / "src/model.ts").read_text(encoding="utf-8")
+    bundle = (installed / "main.js").read_text(encoding="utf-8")
+    styles = (installed / "styles.css").read_text(encoding="utf-8")
+    runbook = (
+        template / "90 System/Runbooks/Recording Neural Atlas.md"
+    ).read_text(encoding="utf-8")
+    home = (template / "Home.md").read_text(encoding="utf-8")
+
+    assert manifest == source_manifest
+    assert manifest["id"] == "neural-atlas"
+    assert manifest["isDesktopOnly"] is False
+    assert (installed / "styles.css").read_bytes() == (
+        integration / "styles.css"
+    ).read_bytes()
+    assert (integration / "package.json").is_file()
+    assert (integration / "package-lock.json").is_file()
+    assert community_plugins == ["neural-atlas"]
+    assert settings == {
+        "startupBehavior": "recording-safe",
+        "lastMode": "synthetic",
+        "motionEnabled": True,
+        "labelsEnabled": True,
+        "renderQuality": "auto",
+    }
+    assert appearance["enabledCssSnippets"] == []
+    assert core_plugins["sync"] is False
+    assert core_plugins["publish"] is False
+
+    runtime = "\n".join([main_source, renderer_source, model_source, bundle])
+    runtime_lower = runtime.lower()
+    assert ".vault.read(" not in runtime
+    assert ".vault.cachedRead(" not in runtime
+    assert ".vault.modify(" not in runtime
+    assert ".vault.create(" not in runtime
+    assert ".vault.delete(" not in runtime
+    assert "getMarkdownFiles()" in main_source
+    assert "metadataCache.resolvedLinks" in main_source
+    assert "metadataCache.getFileCache" in main_source
+    for forbidden in (
+        "fetch(",
+        "xmlhttprequest(",
+        "websocket(",
+        "eventsource(",
+        "requesturl(",
+        "sendbeacon(",
+        "http://",
+        "https://",
+    ):
+        assert forbidden not in runtime_lower
+    for forbidden in ("@import", "@font-face", "url("):
+        assert forbidden not in styles.lower()
+
+    assert 'const SAFE_INITIAL_MODE: AtlasMode = "synthetic"' in main_source
+    open_atlas = main_source[
+        main_source.index("  async openAtlas(") : main_source.index(
+            "  private async withAtlas("
+        )
+    ]
+    assert open_atlas.index("await leaf.view.setMode(mode)") < open_atlas.index(
+        "await workspace.revealLeaf(leaf)"
+    )
+    set_mode = main_source[
+        main_source.index("  async setMode(") : main_source.index(
+            "  async toggleMode("
+        )
+    ]
+    assert set_mode.index(
+        "this.renderer?.setGraph(this.buildGraph())"
+    ) < set_mode.index("await this.plugin.setLastMode(mode)")
+
+    assert "classification: public" in runbook
+    assert "30-45 second" in runbook
+    assert "SYNTHETIC" in runbook
+    assert "90 System/Runbooks/Recording Neural Atlas" in home
+    assert "sample nodes" in bundle
+    assert 'callback: () => void this.openAtlas("synthetic")' in main_source
+    assert "1280" in model_source and "420" in model_source
+    for forbidden in (
+        "/users/",
+        "a1smatrix",
+        "instagram.com",
+        "api_key",
+        "access_token",
+        "conversations.json",
+    ):
+        assert forbidden not in "\n".join(
+            [main_source, renderer_source, model_source, bundle, styles, runbook]
+        ).lower()
 
 
 def test_neural_glass_demo_package_is_public_sanitized_and_valid():

@@ -19,8 +19,8 @@ source adapters, learning system, and operating boundaries tailored to Cruz.
   retrieval, competency scoring, and evidence-of-mastery templates.
 - A doctor command that checks vault validity, raw modes and hashes, sentinel balance, known
   secret-bearing config fields, source freshness, Agent Skills installation, and Git remote risk.
-- A plugin-free, reversible `Prometheus Neural Glass` v1 CSS direction plus a sanitized recording
-  dashboard, Canvas system map, and claim-safe 30-45 second walkthrough.
+- A reversible, local `Neural Atlas` Obsidian view with a deterministic recording-safe mode and a
+  live mode derived only from local vault metadata, links, folders, tags, and safe aggregates.
 
 ## Trust decision on upstream
 
@@ -85,22 +85,33 @@ python3 -m scripts.local_brain install-skills --vault vault
 python3 -m scripts.local_brain doctor --vault vault
 ```
 
-Then open the absolute `vault/` directory in Obsidian as a vault. The setup requires no community
-plugin. Obsidian's core Templates feature can use `Templates/`; optional Dataview/Kanban/semantic
-search should be added only when a real workflow justifies their maintenance and privacy cost. The
-scaffold explicitly disables the Obsidian Sync and Publish core plugins; enabling either is a separate
-privacy and backup decision.
+Then open the absolute `vault/` directory in Obsidian as a vault. Obsidian's core Templates feature
+can use `Templates/`; optional Dataview/Kanban/semantic search should be added only when a real
+workflow justifies their maintenance and privacy cost. The scaffold explicitly disables the Obsidian
+Sync and Publish core plugins; enabling either is a separate privacy and backup decision.
 
-The starter enables dark mode and the local `prometheus-neural-glass` CSS snippet. This visual layer
-uses only native/system fonts and local CSS; it makes no network requests. It is a reversible v1
-direction, not a permanent brand approval: disable it in **Settings → Appearance → CSS snippets** or
-remove its name from `.obsidian/appearance.json` to return to the default interface. The underlying
-Markdown, Canvas data, source records, and privacy controls do not depend on the snippet.
+The sanitized starter includes the source-built, local `Neural Atlas` plugin. It is not downloaded
+from a marketplace and has no runtime dependency, telemetry, API key, remote font, or external asset.
+If Obsidian asks before loading a locally installed plugin, review the included files and enable
+**Neural Atlas** under **Settings → Community plugins**. Use the network-shaped ribbon icon or run
+**Neural Atlas: Open Neural Atlas** from the command palette.
 
-For a privacy-safe screen recording, open `80 Dashboards/Neural Glass Demo.md` and its linked Canvas.
-Do not record the global graph or browse live source folders: their node and file labels can reveal
-private filenames even when note bodies remain closed. Follow `90 System/Runbooks/Recording Neural
-Glass Demo.md` before every capture.
+The intended showcase opens in **Synthetic recording-safe** mode. That mode is deterministic and
+does not query the vault at all. **Live metadata** mode uses only Markdown file metadata already held
+by Obsidian: vault-relative paths, folders, resolved links, tags, and frontmatter. It does not read
+note bodies, send data anywhere, or include decorative halo particles in note/link counts. The HUD
+always labels which mode is active and whether its numbers are synthetic or live.
+
+For a privacy-safe recording, keep the view in its amber-labeled recording-safe mode, collapse
+unrelated sidebars, hide notifications, and verify the top HUD says `SYNTHETIC` before capture. Never
+record the global graph, quick switcher, live metadata mode, source folders, or private notes. The
+commands and visible controls can fit the graph, reset its layout, pause motion, hide labels, and
+return to the safe showcase.
+
+Rollback is one switch: disable **Neural Atlas** under **Settings → Community plugins**. Ordinary
+Markdown notes, Canvas files, source records, and privacy controls do not depend on the view. The
+earlier `prometheus-neural-glass` stylesheet remains recoverable from the prior feature branch and
+local vault history, but it is not the corrected showcase and is not enabled by this branch.
 
 The machine-local source registry is `vault/.brain/config.json`. It is mode `0600` and ignored by
 the vault's Git. It contains paths and account names, never credentials. Provider authentication stays

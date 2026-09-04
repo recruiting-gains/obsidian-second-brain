@@ -74,14 +74,17 @@ state from the ledger, preserve privacy boundaries, and keep every generated cla
 
 ## Command deck
 
-- [[90 System/Runbooks/Recording Neural Glass Demo|Demo recording checklist]]
-- [[80 Dashboards/Neural Glass Demo|Sanitized demo surface]]
-- [[80 Dashboards/Neural Glass System Map.canvas|AI system map]]
+- [[90 System/Runbooks/Recording Neural Atlas|Open and record the Cruz AI Neural Atlas]]
 - [[80 Dashboards/Projects|Project control]]
 - [[80 Dashboards/Learning Dashboard|Learning control]]
 - [[40 Learning/Skills Matrix|Skills matrix]]
 - [[90 System/Policies/Source Boundaries|Privacy boundaries]]
 - [[90 System/Runbooks/Recovery and Rollback|Recovery and rollback]]
+
+> [!note]- PRIOR VISUAL ROLLBACK REFERENCES
+> - [[80 Dashboards/Neural Glass Demo|Neural Glass sanitized demo]]
+> - [[80 Dashboards/Neural Glass System Map.canvas|Neural Glass static system map]]
+> - [[90 System/Runbooks/Recording Neural Glass Demo|Neural Glass recording checklist]]
 
 > [!status]- OPERATING REFERENCES
 > - [[90 System/Policies/Generated Content|Generated-content ownership]]

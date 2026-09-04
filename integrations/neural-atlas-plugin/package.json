@@ -1,0 +1,21 @@
+{
+  "name": "neural-atlas",
+  "version": "0.1.0",
+  "description": "A local-only, metadata-derived neural atlas view for Obsidian.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "pretest": "esbuild src/model.ts --bundle --format=esm --platform=node --outfile=test/.model.mjs --log-level=warning",
+    "test": "node --test test/model.test.mjs",
+    "check": "npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.5.7",
+    "typescript": "^5.4.0"
+  }
+}

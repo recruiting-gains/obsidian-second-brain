@@ -1,0 +1,7 @@
+{
+  "startupBehavior": "recording-safe",
+  "lastMode": "synthetic",
+  "motionEnabled": true,
+  "labelsEnabled": true,
+  "renderQuality": "auto"
+}

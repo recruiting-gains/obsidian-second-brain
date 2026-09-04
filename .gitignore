@@ -32,11 +32,13 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# ...except the Obsidian plugin, which is a real npm package and cannot build
-# from a checkout without its manifest and lockfile. The blanket rule above
-# silently excluded both, so CI would have run `npm ci` against nothing.
+# ...except the maintained Obsidian integrations, which are real npm packages
+# and cannot build from a checkout without their manifests and lockfiles. The
+# blanket rule above would otherwise make `npm ci` run against nothing.
 !integrations/obsidian-plugin/package.json
 !integrations/obsidian-plugin/package-lock.json
+!integrations/neural-atlas-plugin/package.json
+!integrations/neural-atlas-plugin/package-lock.json
 
 # Per-vault retrieval eval cases (contain private note paths; generate locally)
 scripts/eval/retrieval_cases*.jsonl

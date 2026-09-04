@@ -1,0 +1,9 @@
+{
+  "id": "neural-atlas",
+  "name": "Neural Atlas",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Explore a local, metadata-derived map of your Markdown notes or a deterministic recording-safe showcase.",
+  "author": "Cruz Garza",
+  "isDesktopOnly": false
+}
