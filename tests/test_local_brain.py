@@ -1327,3 +1327,100 @@ def test_template_sentinels_are_balanced():
         content = note.read_text(encoding="utf-8")
         assert content.count(GENERATED_START) == content.count(GENERATED_END), note
         assert content.count(USER_START) == content.count(USER_END), note
+
+
+def test_neural_glass_layer_is_reversible_plugin_free_and_network_free():
+    template = REPO_ROOT / "starter-vault"
+    appearance = json.loads(
+        (template / ".obsidian/appearance.json").read_text(encoding="utf-8")
+    )
+    core_plugins = json.loads(
+        (template / ".obsidian/core-plugins.json").read_text(encoding="utf-8")
+    )
+    css = (
+        template / ".obsidian/snippets/prometheus-neural-glass.css"
+    ).read_text(encoding="utf-8")
+    css_lower = css.lower()
+
+    assert appearance["theme"] == "obsidian"
+    assert appearance["enabledCssSnippets"] == ["prometheus-neural-glass"]
+    assert appearance["accentColor"].lower() == "#8b5cf6"
+    assert core_plugins["sync"] is False
+    assert core_plugins["publish"] is False
+    for token in (
+        "--ng-ink-950: #060810",
+        "--ng-ink-850: #0c1220",
+        "--ng-violet-500: #8b5cf6",
+        "--ng-cyan-400: #39d3ff",
+        "--ng-ember-400: #ff8a5b",
+        "--ng-gold-400: #f6bf62",
+        "--ng-text-100: #f5f7ff",
+        ".neural-glass-dashboard",
+        ".neural-glass-demo",
+        'data-callout="neural"',
+        'data-callout="signal"',
+        "prefers-reduced-motion: reduce",
+        ".canvas-node-container",
+        ".graph-view",
+    ):
+        assert token in css
+    for forbidden in ("@import", "@font-face", "url(", "http://", "https://"):
+        assert forbidden not in css_lower
+
+
+def test_neural_glass_demo_package_is_public_sanitized_and_valid():
+    template = REPO_ROOT / "starter-vault"
+    home = (template / "Home.md").read_text(encoding="utf-8")
+    demo = (template / "80 Dashboards/Neural Glass Demo.md").read_text(
+        encoding="utf-8"
+    )
+    runbook = (
+        template / "90 System/Runbooks/Recording Neural Glass Demo.md"
+    ).read_text(encoding="utf-8")
+    canvas = json.loads(
+        (template / "80 Dashboards/Neural Glass System Map.canvas").read_text(
+            encoding="utf-8"
+        )
+    )
+    public_assets = "\n".join(
+        [demo, runbook, json.dumps(canvas, ensure_ascii=False)]
+    ).lower()
+
+    assert "classification: public" in demo
+    assert "demo-data: true" in demo
+    assert "demo data" in demo.lower()
+    assert "open only the recording-safe system map" in demo.lower()
+    assert "return to the command deck" not in demo.lower()
+    assert "open the fde roadmap" not in demo.lower()
+    assert "90 System/Runbooks/Recording Neural Glass Demo" in demo
+    assert "90 System/Runbooks/Recording Neural Glass Demo" in home
+    assert "commit a baseline before relying on rollback" in home.lower()
+    for reference in (
+        "90 System/Policies/Generated Content",
+        "90 System/Policies/Retention Policy",
+        "90 System/Runbooks/Onboarding Sources",
+        "90 System/Runbooks/Weekly Review",
+        "90 System/Runbooks/Upstream Updates",
+    ):
+        assert reference in home
+    assert "classification: public" in runbook
+    assert "30-45 second" in runbook
+    assert len(canvas["nodes"]) >= 6
+    assert len(canvas["edges"]) >= 6
+    assert {node["id"] for node in canvas["nodes"]} >= {
+        "signals",
+        "trust",
+        "memory",
+        "knowledge",
+        "output",
+    }
+    for forbidden in (
+        "/users/",
+        "recruiting-gains",
+        "prometheus-iq",
+        "github.com/",
+        "api_key",
+        "access_token",
+        "conversations.json",
+    ):
+        assert forbidden not in public_assets

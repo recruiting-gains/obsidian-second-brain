@@ -6,6 +6,8 @@ tags:
   - projects
 ai-first: true
 classification: private-local
+cssclasses:
+  - neural-glass-dashboard
 ---
 
 # Projects

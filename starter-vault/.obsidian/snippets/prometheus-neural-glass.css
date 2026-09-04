@@ -1,0 +1,1449 @@
+/*
+ * Prometheus Neural Glass - reversible visual direction v1
+ *
+ * Plugin-free Obsidian snippet. Disable this single snippet to return to the
+ * active theme. No external fonts, images, network requests, or private data.
+ * Dashboard utilities are scoped to notes whose `cssclasses` include
+ * `neural-glass-dashboard` or `neural-glass-demo`. The earlier Prometheus
+ * class aliases remain supported so existing drafts do not break.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Brand lock and Obsidian dark-theme tokens                                   */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark {
+  color-scheme: dark;
+
+  /* Prometheus Neural Glass v1 - editable source of truth. */
+  --ng-ink-950: #060810;
+  --ng-ink-900: #090d17;
+  --ng-ink-850: #0c1220;
+  --ng-ink-800: #11192a;
+  --ng-ink-750: #172238;
+  --ng-violet-600: #7546d7;
+  --ng-violet-500: #8b5cf6;
+  --ng-violet-400: #a78bfa;
+  --ng-cyan-400: #39d3ff;
+  --ng-cyan-300: #7fe9ff;
+  --ng-ember-400: #ff8a5b;
+  --ng-gold-400: #f6bf62;
+  --ng-mint-400: #51e0b0;
+  --ng-rose-400: #ff6b92;
+  --ng-text-100: #f5f7ff;
+  --ng-text-300: #cbd5e5;
+  --ng-text-400: #9aa8bd;
+  --ng-text-500: #718099;
+  --ng-line: rgba(166, 145, 255, 0.18);
+  --ng-line-strong: rgba(166, 145, 255, 0.36);
+  --ng-cyan-line: rgba(57, 211, 255, 0.34);
+  --ng-panel: rgba(12, 18, 32, 0.94);
+  --ng-panel-raised: rgba(17, 25, 42, 0.96);
+  --ng-radius-sm: 8px;
+  --ng-radius-md: 14px;
+  --ng-radius-lg: 20px;
+  --ng-shadow-sm: 0 8px 22px rgba(0, 0, 0, 0.22);
+  --ng-shadow-md: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --ng-ring: 0 0 0 3px rgba(57, 211, 255, 0.22);
+  --ng-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
+
+  /* Native/system typography only. */
+  --font-interface-theme: ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-text-theme: ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-monospace-theme: ui-monospace, "SFMono-Regular", Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
+
+  /* Obsidian surfaces. */
+  --background-primary: var(--ng-ink-900);
+  --background-primary-alt: var(--ng-ink-950);
+  --background-secondary: var(--ng-ink-850);
+  --background-secondary-alt: var(--ng-ink-800);
+  --background-modifier-form-field: rgba(17, 25, 42, 0.88);
+  --background-modifier-form-field-highlighted: rgba(23, 34, 56, 0.96);
+  --background-modifier-border: var(--ng-line);
+  --background-modifier-border-hover: var(--ng-line-strong);
+  --background-modifier-border-focus: var(--ng-cyan-line);
+  --background-modifier-hover: rgba(139, 92, 246, 0.11);
+  --background-modifier-active-hover: rgba(57, 211, 255, 0.13);
+  --background-modifier-success: rgba(81, 224, 176, 0.14);
+  --background-modifier-error: rgba(255, 107, 146, 0.14);
+  --background-modifier-error-hover: rgba(255, 107, 146, 0.2);
+  --background-modifier-cover: rgba(3, 5, 11, 0.82);
+
+  /* Text and interaction. */
+  --text-normal: var(--ng-text-100);
+  --text-muted: var(--ng-text-400);
+  --text-faint: var(--ng-text-500);
+  --text-on-accent: #ffffff;
+  --text-accent: var(--ng-violet-400);
+  --text-accent-hover: var(--ng-cyan-300);
+  --text-success: var(--ng-mint-400);
+  --text-warning: var(--ng-gold-400);
+  --text-error: var(--ng-rose-400);
+  --interactive-normal: var(--ng-ink-800);
+  --interactive-hover: var(--ng-ink-750);
+  --interactive-accent: var(--ng-violet-600);
+  --interactive-accent-hover: #804de0;
+  --interactive-accent-hsl: 259, 65%, 56%;
+  --link-color: var(--ng-cyan-300);
+  --link-color-hover: #b8f2ff;
+  --link-unresolved-color: var(--ng-text-400);
+  --link-unresolved-opacity: 0.78;
+  --tag-color: #c8b9ff;
+  --tag-background: rgba(139, 92, 246, 0.13);
+  --tag-background-hover: rgba(139, 92, 246, 0.22);
+  --tag-border-color: rgba(167, 139, 250, 0.28);
+  --tag-border-color-hover: rgba(127, 233, 255, 0.48);
+  --checkbox-color: var(--ng-violet-500);
+  --checkbox-color-hover: var(--ng-violet-400);
+  --checkbox-border-color: var(--ng-text-500);
+  --caret-color: var(--ng-cyan-300);
+  --text-highlight-bg: rgba(246, 191, 98, 0.2);
+  --text-selection: rgba(139, 92, 246, 0.32);
+
+  /* Borders, rhythm, and graph colors. */
+  --radius-s: var(--ng-radius-sm);
+  --radius-m: var(--ng-radius-md);
+  --radius-l: var(--ng-radius-lg);
+  --divider-color: var(--ng-line);
+  --divider-color-hover: var(--ng-cyan-line);
+  --tab-outline-color: transparent;
+  --graph-line: #27324a;
+  --graph-node: var(--ng-violet-400);
+  --graph-node-focused: var(--ng-cyan-300);
+  --graph-node-tag: var(--ng-gold-400);
+  --graph-node-attachment: var(--ng-ember-400);
+  --graph-node-unresolved: #66748c;
+  --graph-node-unresolved-opacity: 0.8;
+}
+
+/* -------------------------------------------------------------------------- */
+/* App shell: quiet cinematic depth, with no blur or continuous animation      */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark .app-container,
+.theme-dark .horizontal-main-container,
+.theme-dark .workspace {
+  background: var(--ng-ink-950);
+}
+
+.theme-dark .workspace-ribbon,
+.theme-dark .workspace-split.mod-left-split,
+.theme-dark .workspace-split.mod-right-split {
+  background: linear-gradient(180deg, var(--ng-ink-850), var(--ng-ink-950));
+  border-color: var(--ng-line);
+}
+
+.theme-dark .workspace-ribbon {
+  color: var(--ng-text-400);
+}
+
+.theme-dark .workspace-ribbon .clickable-icon:hover,
+.theme-dark .workspace-ribbon .clickable-icon:focus-visible {
+  background: rgba(57, 211, 255, 0.1);
+  color: var(--ng-cyan-300);
+}
+
+.theme-dark .workspace-tab-header-container {
+  background: var(--ng-ink-950);
+  border-bottom: 1px solid var(--ng-line);
+}
+
+.theme-dark .workspace-tab-header {
+  color: var(--ng-text-500);
+  transition: color 160ms var(--ng-ease), background-color 160ms var(--ng-ease);
+}
+
+.theme-dark .workspace-tab-header:hover {
+  color: var(--ng-text-300);
+}
+
+.theme-dark .workspace-tab-header.is-active {
+  color: var(--ng-text-100);
+}
+
+.theme-dark .workspace-tab-header.is-active .workspace-tab-header-inner {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.13), rgba(57, 211, 255, 0.04));
+  box-shadow: inset 0 -2px 0 var(--ng-violet-400);
+}
+
+.theme-dark .workspace-tab-header.is-active .workspace-tab-header-inner-icon {
+  color: var(--ng-cyan-300);
+}
+
+.theme-dark .view-header {
+  background: rgba(9, 13, 23, 0.97);
+  border-bottom: 1px solid var(--ng-line);
+}
+
+.theme-dark .view-header-title {
+  color: var(--ng-text-300);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.theme-dark .workspace-leaf-content[data-type="markdown"] .view-content {
+  background:
+    radial-gradient(circle at 88% -10%, rgba(139, 92, 246, 0.1), transparent 30rem),
+    radial-gradient(circle at 4% 12%, rgba(57, 211, 255, 0.04), transparent 24rem),
+    var(--background-primary);
+}
+
+.theme-dark .status-bar {
+  background: rgba(6, 8, 16, 0.98);
+  border-top: 1px solid var(--ng-line);
+  color: var(--ng-text-500);
+}
+
+.theme-dark .status-bar-item:hover {
+  color: var(--ng-cyan-300);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb {
+  background: rgba(154, 168, 189, 0.24);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(167, 139, 250, 0.42);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Navigation, file explorer, panes, and controls                              */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark .nav-header,
+.theme-dark .search-row,
+.theme-dark .workspace-sidedock-vault-profile {
+  border-color: var(--ng-line);
+}
+
+.theme-dark .nav-folder-title,
+.theme-dark .nav-file-title,
+.theme-dark .tree-item-self {
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius-sm);
+  color: var(--ng-text-400);
+  transition: color 150ms var(--ng-ease), background-color 150ms var(--ng-ease),
+    border-color 150ms var(--ng-ease), transform 150ms var(--ng-ease);
+}
+
+.theme-dark .nav-folder-title:hover,
+.theme-dark .nav-file-title:hover,
+.theme-dark .tree-item-self:hover {
+  background: rgba(139, 92, 246, 0.09);
+  border-color: rgba(167, 139, 250, 0.14);
+  color: var(--ng-text-300);
+}
+
+.theme-dark .nav-file-title.is-active,
+.theme-dark .tree-item-self.is-active {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.17), rgba(57, 211, 255, 0.07));
+  border-color: rgba(127, 233, 255, 0.2);
+  color: var(--ng-text-100);
+  box-shadow: inset 2px 0 0 var(--ng-cyan-400);
+}
+
+.theme-dark .nav-folder-title[data-path^="00 Inbox"] {
+  color: var(--ng-cyan-300);
+}
+
+.theme-dark .nav-folder-title[data-path^="20 Sources"],
+.theme-dark .nav-folder-title[data-path^="30 Knowledge"] {
+  color: #c8b9ff;
+}
+
+.theme-dark .nav-folder-title[data-path^="40 Learning"] {
+  color: var(--ng-gold-400);
+}
+
+.theme-dark .nav-folder-title[data-path^="50 Work"] {
+  color: #ffae8d;
+}
+
+.theme-dark .nav-folder-title[data-path^="80 Dashboards"] {
+  color: var(--ng-mint-400);
+}
+
+.theme-dark .nav-folder-title[data-path^="90 System"] {
+  color: var(--ng-text-400);
+}
+
+.theme-dark :is(input, textarea, select, .search-input-container input) {
+  background: rgba(17, 25, 42, 0.86);
+  border-color: var(--ng-line);
+  color: var(--ng-text-100);
+}
+
+.theme-dark :is(input, textarea, select, .search-input-container input):focus {
+  border-color: var(--ng-cyan-line);
+  box-shadow: var(--ng-ring);
+}
+
+.theme-dark button:not(.clickable-icon) {
+  border: 1px solid var(--ng-line);
+  box-shadow: none;
+  font-weight: 650;
+}
+
+.theme-dark button.mod-cta {
+  background: linear-gradient(135deg, var(--ng-violet-600), #6841d9);
+  border-color: rgba(209, 196, 255, 0.42);
+}
+
+.theme-dark button.mod-cta:hover {
+  background: linear-gradient(135deg, #804de0, var(--ng-violet-600));
+  box-shadow: 0 7px 20px rgba(91, 55, 190, 0.3);
+}
+
+.theme-dark :is(
+  button,
+  input,
+  textarea,
+  select,
+  a,
+  .clickable-icon,
+  .nav-file-title,
+  .nav-folder-title,
+  .workspace-tab-header
+):focus-visible {
+  outline: 2px solid var(--ng-cyan-300);
+  outline-offset: 2px;
+  box-shadow: var(--ng-ring);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reading and editing surfaces                                                */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark .markdown-rendered,
+.theme-dark .markdown-source-view.mod-cm6 .cm-scroller {
+  color: var(--ng-text-300);
+}
+
+.theme-dark .inline-title {
+  color: var(--ng-text-100);
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  font-weight: 780;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.theme-dark .markdown-rendered :is(h1, h2, h3, h4),
+.theme-dark .markdown-source-view.mod-cm6 :is(.HyperMD-header-1, .HyperMD-header-2, .HyperMD-header-3, .HyperMD-header-4) {
+  color: var(--ng-text-100);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.theme-dark .markdown-rendered h1 {
+  font-size: clamp(2rem, 3.6vw, 3.15rem);
+  line-height: 1.05;
+}
+
+.theme-dark .markdown-rendered h2 {
+  margin-top: 2.2em;
+  padding-bottom: 0.42em;
+  border-bottom: 1px solid var(--ng-line);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+}
+
+.theme-dark .markdown-rendered h3 {
+  color: #ded7ff;
+}
+
+.theme-dark .markdown-rendered p,
+.theme-dark .markdown-rendered li {
+  line-height: 1.72;
+}
+
+.theme-dark .markdown-rendered a,
+.theme-dark .cm-hmd-internal-link,
+.theme-dark .cm-link {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.theme-dark .markdown-rendered a:hover {
+  text-decoration-color: var(--ng-cyan-300);
+  text-decoration-thickness: 2px;
+}
+
+.theme-dark .markdown-rendered hr {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--ng-line-strong), var(--ng-cyan-line), transparent);
+}
+
+.theme-dark .markdown-rendered blockquote {
+  margin-inline: 0;
+  padding: 0.8rem 1rem;
+  background: rgba(17, 25, 42, 0.66);
+  border: 1px solid var(--ng-line);
+  border-left: 3px solid var(--ng-violet-400);
+  border-radius: 0 var(--ng-radius-md) var(--ng-radius-md) 0;
+  color: var(--ng-text-300);
+}
+
+.theme-dark .markdown-rendered :is(ul, ol) > li::marker {
+  color: var(--ng-violet-400);
+  font-weight: 700;
+}
+
+.theme-dark .metadata-container {
+  padding: 0.85rem 1rem;
+  background: rgba(12, 18, 32, 0.72);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius-md);
+}
+
+.theme-dark .metadata-property-key {
+  color: var(--ng-text-400);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Calls, data, code, tasks, and tags                                           */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark .callout {
+  --callout-color: 139, 92, 246;
+  margin-block: 1rem;
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(var(--callout-color), 0.11), rgba(12, 18, 32, 0.88));
+  border: 1px solid rgba(var(--callout-color), 0.3);
+  border-left-width: 3px;
+  border-radius: var(--ng-radius-md);
+  box-shadow: var(--ng-shadow-sm);
+}
+
+.theme-dark .callout-title {
+  min-height: 2.8rem;
+  padding: 0.74rem 0.9rem;
+  color: rgb(var(--callout-color));
+  font-size: 0.82rem;
+  font-weight: 760;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.theme-dark .callout-content {
+  padding: 0 0.95rem 0.9rem;
+  color: var(--ng-text-300);
+}
+
+.theme-dark .callout[data-callout="signal"] {
+  --callout-color: 57, 211, 255;
+  --callout-icon: lucide-radio;
+}
+
+.theme-dark .callout[data-callout="neural"] {
+  --callout-color: 167, 139, 250;
+  --callout-icon: lucide-sparkles;
+}
+
+.theme-dark .callout[data-callout="status"] {
+  --callout-color: 81, 224, 176;
+  --callout-icon: lucide-activity;
+}
+
+.theme-dark .callout[data-callout="secure"] {
+  --callout-color: 81, 224, 176;
+  --callout-icon: lucide-shield-check;
+}
+
+.theme-dark .callout[data-callout="progress"] {
+  --callout-color: 167, 139, 250;
+  --callout-icon: lucide-gauge;
+}
+
+.theme-dark .callout[data-callout="action"] {
+  --callout-color: 246, 191, 98;
+  --callout-icon: lucide-zap;
+}
+
+.theme-dark .callout[data-callout="source"] {
+  --callout-color: 255, 138, 91;
+  --callout-icon: lucide-database;
+}
+
+.theme-dark .callout:is([data-callout="info"], [data-callout="todo"], [data-callout="question"]) {
+  --callout-color: 57, 211, 255;
+}
+
+.theme-dark .callout:is([data-callout="success"], [data-callout="check"], [data-callout="done"]) {
+  --callout-color: 81, 224, 176;
+}
+
+.theme-dark .callout:is([data-callout="warning"], [data-callout="caution"], [data-callout="important"]) {
+  --callout-color: 246, 191, 98;
+}
+
+.theme-dark .callout:is([data-callout="failure"], [data-callout="danger"], [data-callout="bug"]) {
+  --callout-color: 255, 107, 146;
+}
+
+/* The opening Neural callout doubles as a screen-readable dashboard hero. */
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] {
+  position: relative;
+  isolation: isolate;
+  margin-top: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(118deg, rgba(139, 92, 246, 0.2), transparent 52%),
+    linear-gradient(155deg, rgba(57, 211, 255, 0.09), transparent 60%),
+    var(--ng-panel-raised);
+  border-color: var(--ng-line-strong);
+  border-left-width: 1px;
+  border-radius: var(--ng-radius-lg);
+  box-shadow: var(--ng-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"]::after {
+  position: absolute;
+  z-index: -1;
+  top: -8rem;
+  right: -6rem;
+  width: 21rem;
+  height: 21rem;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 68%);
+  border-radius: 999px;
+  pointer-events: none;
+  content: "";
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] .callout-title {
+  padding: clamp(1rem, 2vw, 1.4rem) clamp(1.15rem, 3vw, 2.2rem) 0;
+  color: var(--ng-cyan-300);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] .callout-content {
+  padding: 0.35rem clamp(1.15rem, 3vw, 2.2rem) clamp(1.25rem, 3vw, 2.2rem);
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] h1 {
+  max-width: 15ch;
+  margin: 0.25rem 0 0.7rem;
+  color: var(--ng-text-100);
+  font-size: clamp(2rem, 5vw, 4.45rem);
+  font-weight: 820;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] p {
+  max-width: 62ch;
+  margin-block: 0.65rem 0;
+  color: var(--ng-text-300);
+  font-size: clamp(0.96rem, 1.55vw, 1.12rem);
+  line-height: 1.62;
+}
+
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) .callout[data-callout="neural"] code {
+  display: inline-flex;
+  min-height: 1.55rem;
+  align-items: center;
+  margin-block: 0.2rem;
+  padding: 0.18rem 0.52rem;
+  color: var(--ng-cyan-300);
+  background: rgba(6, 8, 16, 0.48);
+  border-color: rgba(57, 211, 255, 0.24);
+  border-radius: 999px;
+  font-family: var(--font-interface-theme);
+  font-size: 0.64rem;
+  font-weight: 790;
+  letter-spacing: 0.055em;
+  line-height: 1;
+}
+
+.theme-dark .markdown-rendered table {
+  width: 100%;
+  margin-block: 1rem 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--ng-line);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--ng-radius-md);
+  background: rgba(12, 18, 32, 0.68);
+  box-shadow: var(--ng-shadow-sm);
+}
+
+.theme-dark .markdown-rendered th {
+  padding: 0.78rem 0.86rem;
+  background: rgba(139, 92, 246, 0.11);
+  border-color: var(--ng-line);
+  color: var(--ng-text-300);
+  font-size: 0.7rem;
+  font-weight: 780;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.theme-dark .markdown-rendered td {
+  padding: 0.76rem 0.86rem;
+  border-color: rgba(166, 145, 255, 0.1);
+  color: var(--ng-text-300);
+  vertical-align: middle;
+}
+
+/*
+ * Dashboard tables use neutral, text-labelled status pills. The label carries
+ * meaning; generic inline code must not imply that OFF, WAITING, and READY are
+ * the same positive state.
+ */
+.theme-dark :is(
+  .neural-glass-dashboard,
+  .neural-glass-demo,
+  .prometheus-dashboard,
+  .prometheus-demo
+) td code {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.18rem 0.5rem;
+  color: var(--ng-text-300);
+  background: rgba(166, 145, 255, 0.08);
+  border: 1px solid rgba(166, 145, 255, 0.2);
+  border-radius: 999px;
+  font-family: var(--font-interface-theme);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.theme-dark .markdown-rendered tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.theme-dark .markdown-rendered tbody tr:hover {
+  background: rgba(57, 211, 255, 0.045);
+}
+
+.theme-dark :not(pre) > code,
+.theme-dark .cm-inline-code {
+  padding: 0.12em 0.38em;
+  color: #d9cfff;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.19);
+  border-radius: 5px;
+}
+
+.theme-dark .markdown-rendered pre,
+.theme-dark .HyperMD-codeblock-bg {
+  background: rgba(6, 8, 16, 0.9);
+  border: 1px solid var(--ng-line);
+}
+
+.theme-dark .markdown-rendered pre {
+  padding: 1rem 1.1rem;
+  border-radius: var(--ng-radius-md);
+  box-shadow: inset 3px 0 0 rgba(57, 211, 255, 0.42);
+}
+
+.theme-dark .markdown-rendered pre code {
+  color: #d8e3f3;
+}
+
+.theme-dark .markdown-rendered input[type="checkbox"] {
+  accent-color: var(--ng-violet-500);
+}
+
+.theme-dark .markdown-rendered .task-list-item[data-task="x"] > .task-list-item-checkbox:checked,
+.theme-dark .markdown-rendered .task-list-item.is-checked > .task-list-item-checkbox:checked {
+  filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.35));
+}
+
+.theme-dark .markdown-rendered .task-list-item[data-task="x"],
+.theme-dark .markdown-rendered .task-list-item.is-checked {
+  color: var(--ng-text-500);
+}
+
+.theme-dark :is(.tag, .cm-hashtag) {
+  border: 1px solid var(--tag-border-color);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 720;
+  letter-spacing: 0.025em;
+  text-decoration: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dashboard and vertical demo composition                                    */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark :is(
+  .markdown-preview-view.prometheus-dashboard,
+  .markdown-preview-view.neural-glass-dashboard
+) .markdown-preview-sizer,
+.theme-dark :is(
+  .markdown-source-view.mod-cm6.prometheus-dashboard,
+  .markdown-source-view.mod-cm6.neural-glass-dashboard
+) .cm-sizer {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-bottom: 7rem;
+}
+
+.theme-dark :is(
+  .markdown-preview-view.prometheus-demo,
+  .markdown-preview-view.neural-glass-demo
+) .markdown-preview-sizer,
+.theme-dark :is(
+  .markdown-source-view.mod-cm6.prometheus-demo,
+  .markdown-source-view.mod-cm6.neural-glass-demo
+) .cm-sizer {
+  max-width: 860px;
+  margin-inline: auto;
+  padding-bottom: 6rem;
+}
+
+.theme-dark :is(
+  .markdown-preview-view.prometheus-demo,
+  .markdown-preview-view.neural-glass-demo
+) .metadata-container {
+  display: none;
+}
+
+/* Obsidian 1.13 can attach note CSS classes to the rendered section rather
+ * than the preview root. `:has()` keeps the reading view clean in either DOM
+ * shape while leaving metadata available in Live Preview for editing. */
+.theme-dark .markdown-preview-view:has(
+  :is(
+    .prometheus-dashboard,
+    .prometheus-demo,
+    .neural-glass-dashboard,
+    .neural-glass-demo
+  )
+) .mod-header {
+  display: none;
+}
+
+.theme-dark .markdown-preview-view:has(
+  :is(.prometheus-demo, .neural-glass-demo)
+) .markdown-preview-sizer {
+  max-width: 860px;
+  margin-inline: auto;
+  padding-bottom: 6rem;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) {
+  --ng-card-gap: clamp(0.78rem, 1.5vw, 1rem);
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) .inline-title {
+  display: none;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) h1:first-of-type {
+  margin-top: 0;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.4rem;
+  color: var(--ng-text-100);
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) h2::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  background: var(--ng-cyan-400);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(57, 211, 255, 0.09);
+  content: "";
+}
+
+.theme-dark .ng-hero {
+  position: relative;
+  isolation: isolate;
+  margin: 0 0 1.35rem;
+  padding: clamp(1.35rem, 3.5vw, 2.5rem);
+  overflow: hidden;
+  background:
+    linear-gradient(120deg, rgba(139, 92, 246, 0.17), transparent 52%),
+    linear-gradient(155deg, rgba(57, 211, 255, 0.08), transparent 58%),
+    var(--ng-panel-raised);
+  border: 1px solid var(--ng-line-strong);
+  border-radius: var(--ng-radius-lg);
+  box-shadow: var(--ng-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.theme-dark .ng-hero::before,
+.theme-dark .ng-hero::after {
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+  content: "";
+}
+
+.theme-dark .ng-hero::before {
+  top: -7rem;
+  right: -5rem;
+  width: 18rem;
+  height: 18rem;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.21), transparent 68%);
+}
+
+.theme-dark .ng-hero::after {
+  right: 4.5rem;
+  bottom: -7rem;
+  width: 15rem;
+  height: 15rem;
+  background: radial-gradient(circle, rgba(57, 211, 255, 0.12), transparent 68%);
+}
+
+.theme-dark .ng-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  margin-bottom: 0.9rem;
+  color: var(--ng-cyan-300);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.theme-dark .ng-kicker::before {
+  width: 0.48rem;
+  height: 0.48rem;
+  background: currentColor;
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(57, 211, 255, 0.1);
+  content: "";
+}
+
+.theme-dark .ng-title {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--ng-text-100);
+  font-size: clamp(2.2rem, 6vw, 4.8rem);
+  font-weight: 820;
+  letter-spacing: -0.058em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.theme-dark .ng-title em {
+  color: var(--ng-violet-400);
+  font-style: normal;
+}
+
+.theme-dark .ng-lead {
+  max-width: 62ch;
+  margin: 1rem 0 0;
+  color: var(--ng-text-300);
+  font-size: clamp(1rem, 1.6vw, 1.16rem);
+  line-height: 1.62;
+}
+
+.theme-dark .ng-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
+}
+
+.theme-dark .ng-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.26rem 0.65rem;
+  color: var(--ng-text-300);
+  background: rgba(6, 8, 16, 0.48);
+  border: 1px solid var(--ng-line);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 720;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.theme-dark .ng-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-card-gap);
+  margin-block: 1rem 1.5rem;
+}
+
+.theme-dark .ng-grid.ng-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.theme-dark .ng-grid.ng-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.theme-dark .ng-card {
+  position: relative;
+  min-width: 0;
+  padding: 1rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(17, 25, 42, 0.94), rgba(9, 13, 23, 0.94));
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius-md);
+  box-shadow: var(--ng-shadow-sm);
+  transition: transform 180ms var(--ng-ease), border-color 180ms var(--ng-ease),
+    box-shadow 180ms var(--ng-ease);
+}
+
+.theme-dark .ng-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.65), transparent);
+  content: "";
+}
+
+.theme-dark .ng-card.is-cyan::before {
+  background: linear-gradient(90deg, transparent, rgba(57, 211, 255, 0.74), transparent);
+}
+
+.theme-dark .ng-card.is-gold::before {
+  background: linear-gradient(90deg, transparent, rgba(246, 191, 98, 0.7), transparent);
+}
+
+.theme-dark .ng-card.is-mint::before {
+  background: linear-gradient(90deg, transparent, rgba(81, 224, 176, 0.7), transparent);
+}
+
+.theme-dark .ng-card__label {
+  display: block;
+  margin-bottom: 0.48rem;
+  color: var(--ng-text-400);
+  font-size: 0.67rem;
+  font-weight: 780;
+  letter-spacing: 0.105em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.theme-dark .ng-card__value {
+  display: block;
+  color: var(--ng-text-100);
+  font-size: clamp(1.3rem, 2.3vw, 1.9rem);
+  font-weight: 780;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.theme-dark .ng-card__meta {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--ng-text-400);
+  font-size: 0.78rem;
+  line-height: 1.48;
+}
+
+.theme-dark .ng-card :is(a, .internal-link) {
+  color: var(--ng-cyan-300);
+  font-weight: 650;
+}
+
+.theme-dark .ng-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  width: fit-content;
+  min-height: 1.7rem;
+  padding: 0.2rem 0.58rem;
+  color: var(--ng-text-300);
+  background: rgba(154, 168, 189, 0.08);
+  border: 1px solid rgba(154, 168, 189, 0.2);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.theme-dark .ng-status::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  background: currentColor;
+  border-radius: 999px;
+  content: "";
+}
+
+.theme-dark .ng-status[data-status="live"],
+.theme-dark .ng-status[data-status="ready"] {
+  color: var(--ng-mint-400);
+  background: rgba(81, 224, 176, 0.09);
+  border-color: rgba(81, 224, 176, 0.28);
+}
+
+.theme-dark .ng-status[data-status="signal"] {
+  color: var(--ng-cyan-300);
+  background: rgba(57, 211, 255, 0.09);
+  border-color: rgba(57, 211, 255, 0.28);
+}
+
+.theme-dark .ng-status[data-status="waiting"],
+.theme-dark .ng-status[data-status="paused"] {
+  color: var(--ng-gold-400);
+  background: rgba(246, 191, 98, 0.09);
+  border-color: rgba(246, 191, 98, 0.28);
+}
+
+.theme-dark .ng-status[data-status="private"] {
+  color: var(--ng-violet-400);
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.theme-dark .ng-status[data-status="attention"] {
+  color: var(--ng-rose-400);
+  background: rgba(255, 107, 146, 0.09);
+  border-color: rgba(255, 107, 146, 0.3);
+}
+
+.theme-dark .ng-source-list {
+  display: grid;
+  gap: 0.58rem;
+  margin-block: 1rem;
+}
+
+.theme-dark .ng-source {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 3.25rem;
+  padding: 0.66rem 0.78rem;
+  background: rgba(12, 18, 32, 0.62);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius-sm);
+}
+
+.theme-dark .ng-source__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ng-text-300);
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-dark .ng-progress-row {
+  display: grid;
+  gap: 0.48rem;
+  margin-block: 0.8rem;
+}
+
+.theme-dark .ng-progress-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ng-text-300);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.theme-dark progress.ng-progress,
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) progress {
+  width: 100%;
+  height: 0.46rem;
+  overflow: hidden;
+  appearance: none;
+  background: var(--ng-ink-950);
+  border: 0;
+  border-radius: 999px;
+}
+
+.theme-dark progress.ng-progress::-webkit-progress-bar,
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) progress::-webkit-progress-bar {
+  background: var(--ng-ink-950);
+  border: 1px solid rgba(167, 139, 250, 0.16);
+  border-radius: 999px;
+}
+
+.theme-dark progress.ng-progress::-webkit-progress-value,
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--ng-violet-500), var(--ng-cyan-400));
+  border-radius: 999px;
+}
+
+.theme-dark progress.ng-progress::-moz-progress-bar,
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) progress::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--ng-violet-500), var(--ng-cyan-400));
+  border-radius: 999px;
+}
+
+.theme-dark .ng-activity {
+  position: relative;
+  display: grid;
+  gap: 0.8rem;
+  margin: 1rem 0;
+  padding-left: 1.1rem;
+}
+
+.theme-dark .ng-activity::before {
+  position: absolute;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  left: 0.18rem;
+  width: 1px;
+  background: linear-gradient(var(--ng-violet-400), rgba(57, 211, 255, 0.18));
+  content: "";
+}
+
+.theme-dark .ng-activity__item {
+  position: relative;
+  min-height: 2.2rem;
+  padding: 0.56rem 0.72rem;
+  background: rgba(12, 18, 32, 0.52);
+  border: 1px solid rgba(166, 145, 255, 0.12);
+  border-radius: var(--ng-radius-sm);
+  color: var(--ng-text-300);
+}
+
+.theme-dark .ng-activity__item::before {
+  position: absolute;
+  top: 0.85rem;
+  left: -1.22rem;
+  width: 0.48rem;
+  height: 0.48rem;
+  background: var(--ng-cyan-400);
+  border: 2px solid var(--ng-ink-900);
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(57, 211, 255, 0.11);
+  content: "";
+}
+
+.theme-dark .ng-actions {
+  display: grid;
+  gap: 0.62rem;
+  margin-block: 1rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: ng-action;
+}
+
+.theme-dark .ng-actions > li {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.72rem;
+  margin: 0;
+  padding: 0.78rem;
+  background: rgba(17, 25, 42, 0.62);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius-sm);
+  counter-increment: ng-action;
+}
+
+.theme-dark .ng-actions > li::before {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  color: var(--ng-cyan-300);
+  background: rgba(57, 211, 255, 0.08);
+  border: 1px solid var(--ng-cyan-line);
+  border-radius: 7px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  content: counter(ng-action, decimal-leading-zero);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Graph and Canvas                                                            */
+/* -------------------------------------------------------------------------- */
+
+.theme-dark .graph-view,
+.theme-dark .canvas-wrapper {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.09), transparent 34rem),
+    var(--ng-ink-950);
+}
+
+.theme-dark .graph-controls,
+.theme-dark .graph-control-section,
+.theme-dark .canvas-controls,
+.theme-dark .canvas-card-menu {
+  background: var(--ng-panel-raised);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius-md);
+  box-shadow: var(--ng-shadow-md);
+}
+
+.theme-dark .canvas-node-container {
+  background: linear-gradient(145deg, var(--ng-ink-800), var(--ng-ink-900));
+  border: 1px solid var(--ng-line-strong);
+  border-radius: var(--ng-radius-md);
+  box-shadow: var(--ng-shadow-sm);
+}
+
+.theme-dark .canvas-node.is-selected .canvas-node-container {
+  border-color: var(--ng-cyan-400);
+  box-shadow: var(--ng-ring), var(--ng-shadow-md);
+}
+
+.theme-dark :is(.canvas-node, .canvas-group)[data-color="3"] {
+  --canvas-color: 246, 191, 98;
+}
+
+.theme-dark :is(.canvas-node, .canvas-group)[data-color="4"] {
+  --canvas-color: 81, 224, 176;
+}
+
+.theme-dark :is(.canvas-node, .canvas-group)[data-color="5"] {
+  --canvas-color: 57, 211, 255;
+}
+
+.theme-dark :is(.canvas-node, .canvas-group)[data-color="6"] {
+  --canvas-color: 167, 139, 250;
+}
+
+.theme-dark .canvas-node.is-themed .canvas-node-container {
+  border-color: rgba(var(--canvas-color), 0.58);
+  box-shadow: var(--ng-shadow-sm), inset 0 1px 0 rgba(var(--canvas-color), 0.14);
+}
+
+.theme-dark .canvas-edges path.canvas-display-path {
+  stroke: rgba(127, 233, 255, 0.5);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Motion, responsive behavior, and high-contrast accommodation                */
+/* -------------------------------------------------------------------------- */
+
+@media (hover: hover) and (pointer: fine) {
+  .theme-dark .ng-card:hover {
+    border-color: var(--ng-cyan-line);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 22px rgba(139, 92, 246, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .theme-dark .nav-file-title:hover,
+  .theme-dark .nav-folder-title:hover {
+    transform: translateX(2px);
+  }
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) :is(.ng-hero, .ng-card, .callout) {
+  animation: ng-enter 320ms var(--ng-ease) both;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) .ng-card:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) .ng-card:nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.theme-dark :is(
+  .prometheus-dashboard,
+  .prometheus-demo,
+  .neural-glass-dashboard,
+  .neural-glass-demo
+) .ng-card:nth-child(4) {
+  animation-delay: 135ms;
+}
+
+@keyframes ng-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .theme-dark .ng-grid.ng-grid--4,
+  .theme-dark .ng-grid.ng-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px), (orientation: portrait) and (max-width: 900px) {
+  .theme-dark :is(
+    .markdown-preview-view.prometheus-dashboard,
+    .markdown-preview-view.prometheus-demo,
+    .markdown-preview-view.neural-glass-dashboard,
+    .markdown-preview-view.neural-glass-demo
+  ) .markdown-preview-sizer {
+    padding-inline: clamp(0.8rem, 3vw, 1.15rem);
+  }
+
+  .theme-dark .ng-hero {
+    padding: 1.25rem;
+    border-radius: var(--ng-radius-md);
+  }
+
+  .theme-dark .ng-title {
+    max-width: 11ch;
+    font-size: clamp(2.2rem, 12vw, 3.8rem);
+  }
+
+  .theme-dark .ng-grid,
+  .theme-dark .ng-grid.ng-grid--3,
+  .theme-dark .ng-grid.ng-grid--4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .theme-dark .ng-source {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .theme-dark .markdown-rendered table {
+    font-size: 0.82rem;
+  }
+
+  .theme-dark .markdown-rendered :is(th, td) {
+    padding: 0.62rem 0.58rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-dark *,
+  .theme-dark *::before,
+  .theme-dark *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .theme-dark {
+    --ng-line: rgba(203, 213, 229, 0.4);
+    --ng-line-strong: rgba(203, 213, 229, 0.68);
+    --ng-cyan-line: rgba(127, 233, 255, 0.74);
+    --text-muted: #b5c0d1;
+    --text-faint: #95a3b8;
+  }
+
+  .theme-dark :is(.ng-card, .ng-hero, .callout, .markdown-rendered table) {
+    box-shadow: none;
+  }
+}

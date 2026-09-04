@@ -6,7 +6,8 @@
 # Obsidian per-device state
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
-.obsidian/appearance.json
+# The appearance file is intentionally versioned: it is the reversible,
+# plugin-free activation record for the Neural Glass CSS snippet.
 .obsidian/cache
 .trash/
 

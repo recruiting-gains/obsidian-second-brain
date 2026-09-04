@@ -1,0 +1,13 @@
+{
+  "accentColor": "#8B5CF6",
+  "baseFontSize": 16,
+  "cssTheme": "",
+  "enabledCssSnippets": [
+    "prometheus-neural-glass"
+  ],
+  "interfaceFontFamily": "",
+  "monospaceFontFamily": "",
+  "textFontFamily": "",
+  "theme": "obsidian",
+  "translucency": false
+}

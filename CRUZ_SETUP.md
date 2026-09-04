@@ -19,6 +19,8 @@ source adapters, learning system, and operating boundaries tailored to Cruz.
   retrieval, competency scoring, and evidence-of-mastery templates.
 - A doctor command that checks vault validity, raw modes and hashes, sentinel balance, known
   secret-bearing config fields, source freshness, Agent Skills installation, and Git remote risk.
+- A plugin-free, reversible `Prometheus Neural Glass` v1 CSS direction plus a sanitized recording
+  dashboard, Canvas system map, and claim-safe 30-45 second walkthrough.
 
 ## Trust decision on upstream
 
@@ -88,6 +90,17 @@ plugin. Obsidian's core Templates feature can use `Templates/`; optional Datavie
 search should be added only when a real workflow justifies their maintenance and privacy cost. The
 scaffold explicitly disables the Obsidian Sync and Publish core plugins; enabling either is a separate
 privacy and backup decision.
+
+The starter enables dark mode and the local `prometheus-neural-glass` CSS snippet. This visual layer
+uses only native/system fonts and local CSS; it makes no network requests. It is a reversible v1
+direction, not a permanent brand approval: disable it in **Settings → Appearance → CSS snippets** or
+remove its name from `.obsidian/appearance.json` to return to the default interface. The underlying
+Markdown, Canvas data, source records, and privacy controls do not depend on the snippet.
+
+For a privacy-safe screen recording, open `80 Dashboards/Neural Glass Demo.md` and its linked Canvas.
+Do not record the global graph or browse live source folders: their node and file labels can reveal
+private filenames even when note bodies remain closed. Follow `90 System/Runbooks/Recording Neural
+Glass Demo.md` before every capture.
 
 The machine-local source registry is `vault/.brain/config.json`. It is mode `0600` and ignored by
 the vault's Git. It contains paths and account names, never credentials. Provider authentication stays

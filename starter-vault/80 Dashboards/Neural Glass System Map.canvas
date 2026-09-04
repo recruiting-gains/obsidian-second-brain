@@ -1,0 +1,140 @@
+{
+  "nodes": [
+    {
+      "id": "hero",
+      "type": "text",
+      "text": "# PROMETHEUS NEURAL GLASS\n## Local-first intelligence, visibly governed\nSanitized system map · no private note bodies or filenames",
+      "x": 0,
+      "y": 0,
+      "width": 760,
+      "height": 180,
+      "color": "6"
+    },
+    {
+      "id": "signals",
+      "type": "text",
+      "text": "## 01 · DELIBERATE SIGNALS\n- Repository metadata\n- Human-reviewed exports\n- Approved news artifacts\n- Selected images and usage records",
+      "x": 0,
+      "y": 250,
+      "width": 360,
+      "height": 230,
+      "color": "5"
+    },
+    {
+      "id": "trust",
+      "type": "text",
+      "text": "## 02 · TRUST GATE\n- Exact source boundary\n- Classification check\n- Size and type validation\n- No implicit publishing",
+      "x": 400,
+      "y": 250,
+      "width": 360,
+      "height": 230,
+      "color": "3"
+    },
+    {
+      "id": "memory",
+      "type": "text",
+      "text": "## 03 · IMMUTABLE MEMORY\n**Exact bytes → SHA-256 identity**\n\nFirst-capture sidecar + append-only observations + atomic cursor + audit ledger",
+      "x": 0,
+      "y": 550,
+      "width": 760,
+      "height": 230,
+      "color": "6"
+    },
+    {
+      "id": "knowledge",
+      "type": "text",
+      "text": "## 04 · REVIEWABLE KNOWLEDGE\n- Source-linked manifests\n- Protected user sections\n- Explicit uncertainty\n- Freshness checks",
+      "x": 0,
+      "y": 850,
+      "width": 360,
+      "height": 230,
+      "color": "5"
+    },
+    {
+      "id": "learning",
+      "type": "text",
+      "text": "## 05 · DECISIONS + LEARNING\n- Evidence-gated FDE roadmap\n- Assessments and retrieval\n- Decision records\n- One active outcome",
+      "x": 400,
+      "y": 850,
+      "width": 360,
+      "height": 230,
+      "color": "3"
+    },
+    {
+      "id": "output",
+      "type": "text",
+      "text": "## 06 · CONTROLLED OUTPUT\n### Briefs · demos · next actions · handoffs\nEverything stays reviewable. External effects require a deliberate decision.",
+      "x": 0,
+      "y": 1150,
+      "width": 760,
+      "height": 230,
+      "color": "4"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-hero-signals",
+      "fromNode": "hero",
+      "fromSide": "bottom",
+      "toNode": "signals",
+      "toSide": "top",
+      "color": "5"
+    },
+    {
+      "id": "edge-hero-trust",
+      "fromNode": "hero",
+      "fromSide": "bottom",
+      "toNode": "trust",
+      "toSide": "top",
+      "color": "6"
+    },
+    {
+      "id": "edge-signals-memory",
+      "fromNode": "signals",
+      "fromSide": "bottom",
+      "toNode": "memory",
+      "toSide": "top",
+      "color": "5"
+    },
+    {
+      "id": "edge-trust-memory",
+      "fromNode": "trust",
+      "fromSide": "bottom",
+      "toNode": "memory",
+      "toSide": "top",
+      "color": "3"
+    },
+    {
+      "id": "edge-memory-knowledge",
+      "fromNode": "memory",
+      "fromSide": "bottom",
+      "toNode": "knowledge",
+      "toSide": "top",
+      "color": "6"
+    },
+    {
+      "id": "edge-memory-learning",
+      "fromNode": "memory",
+      "fromSide": "bottom",
+      "toNode": "learning",
+      "toSide": "top",
+      "color": "6"
+    },
+    {
+      "id": "edge-knowledge-output",
+      "fromNode": "knowledge",
+      "fromSide": "bottom",
+      "toNode": "output",
+      "toSide": "top",
+      "color": "5"
+    },
+    {
+      "id": "edge-learning-output",
+      "fromNode": "learning",
+      "fromSide": "bottom",
+      "toNode": "output",
+      "toSide": "top",
+      "color": "3"
+    }
+  ]
+}
