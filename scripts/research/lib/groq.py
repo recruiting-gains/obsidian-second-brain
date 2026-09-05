@@ -32,6 +32,7 @@ from pathlib import Path
 import requests
 
 from . import config
+from .public_http import download_public
 
 GROQ_TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 GROQ_MODEL = "whisper-large-v3-turbo"
@@ -39,6 +40,15 @@ GROQ_MODEL = "whisper-large-v3-turbo"
 # Groq per-request cap (26,214,400 bytes, verified 2026-08-30 from live headers
 # and console.groq.com). Re-encoded files larger than this must be split.
 GROQ_MAX_BYTES = 25 * 1024 * 1024
+# Source audio is larger than re-encoded audio but must not exhaust local disk.
+GROQ_MAX_DOWNLOAD_BYTES = 512 * 1024 * 1024
+# A downloaded file is untrusted even after its URL passes validation. Do not
+# let FFmpeg autodetect playlists that load more URLs/files. MOV's external
+# track loading (enable_drefs/use_absolute_path) stays disabled by default.
+_SAFE_AUDIO_INPUT = [
+    "-protocol_whitelist", "file",
+    "-format_whitelist", "mp3,mov,ogg,wav,flac,aac",
+]
 
 # Re-encode target. Whisper resamples to 16kHz mono server-side anyway (standard
 # ASR preprocessing), so we lose nothing by handing it a small mono file, and we
@@ -72,6 +82,7 @@ def _ffprobe_duration_seconds(path: Path) -> float:
             "ffprobe",
             "-v",
             "error",
+            *_SAFE_AUDIO_INPUT,
             "-show_entries",
             "format=duration",
             "-of",
@@ -92,11 +103,8 @@ def _download_audio(audio_url: str, dest_path: Path, safe_fetch_url) -> None:
     bad = safe_fetch_url(audio_url)
     if bad:
         raise RuntimeError(f"refused unsafe audio url: {bad}")
-    with requests.get(audio_url, stream=True, timeout=60) as resp:
-        resp.raise_for_status()
-        with dest_path.open("wb") as f:
-            for chunk in resp.iter_content(chunk_size=64 * 1024):
-                f.write(chunk)
+    with dest_path.open("wb") as f:
+        download_public(audio_url, f, max_bytes=GROQ_MAX_DOWNLOAD_BYTES)
 
 
 def _downsample_to_mono_mp3(src: Path, dest: Path) -> None:
@@ -115,6 +123,7 @@ def _downsample_to_mono_mp3(src: Path, dest: Path) -> None:
             "-v",
             "error",
             "-y",
+            *_SAFE_AUDIO_INPUT,
             "-i",
             str(src),
             "-vn",
@@ -157,6 +166,7 @@ def _split_reencoded_chunks(
                 "-v",
                 "error",
                 "-y",
+                *_SAFE_AUDIO_INPUT,
                 "-ss",
                 f"{start:.3f}",
                 "-t",

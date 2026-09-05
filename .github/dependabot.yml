@@ -24,3 +24,14 @@ updates:
     groups:
       python:
         patterns: ["*"]
+
+  # The Obsidian plugin is a separate npm package with its own lockfile.
+  - package-ecosystem: "npm"
+    directory: "/integrations/obsidian-plugin"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "deps"
+    groups:
+      obsidian-plugin:
+        patterns: ["*"]

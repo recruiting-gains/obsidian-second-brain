@@ -501,6 +501,15 @@ Free transcript via youtube-transcript-api + optional metadata + comments via Yo
 
 Resolves Apple Podcasts URLs to RSS via the free iTunes Lookup API. Picks the best transcript source available: `<podcast:transcript>` tag in the RSS feed (free, high fidelity) → Whisper API if `OPENAI_API_KEY` is set (~$0.006/min) → show-notes fallback. Grok summarizes into TL;DR, Key Points, Notable Quotes, Themes, Guests & People Mentioned, and Worth Following Up On. ~$0.04 for the Grok call (plus Whisper if used). Spotify URLs aren't supported (DRM).
 
+**Podcast download safety in this fork:** publisher-selected feeds, transcripts, and audio are fetched without browser cookies, environment proxies, netrc credentials, or provider keys. Each URL and redirect must resolve entirely to public addresses; connections are pinned to a checked address while HTTPS still verifies the original hostname. RSS parsing receives bytes, never a URL to fetch independently. These are local research tools, not a sandbox for arbitrary hostile media.
+
+- Downloads stop after five redirects. Feeds/transcripts are capped at 4 MiB each; Whisper source audio at 25 MiB; Groq source audio at 512 MiB before re-encoding. Actual bytes are checked even when the server omits or lies about its size.
+- Servers must honor `Accept-Encoding: identity`; compressed HTTP bodies are refused to avoid decompression attacks. Private-network feeds, proxy-only networks, unusually large episodes, and other unsupported downloads may fail safely or fall back to show notes.
+- The ten-minute budget is checked between operations, with separate connect/read timeouts. It is **not a hard wall-clock guarantee**: system DNS resolution or a pending read may exceed that budget.
+- Groq's local media tools allow only file input and MP3, MOV/M4A/MP4, Ogg, WAV, FLAC, and AAC formats. HLS/DASH/concat playlists are not supported; external MOV tracks remain disabled. Keep your locally installed FFmpeg current.
+
+Implementation references: [urllib3's IP connections with original-host TLS](https://urllib3.readthedocs.io/en/stable/advanced-usage.html#custom-sni-hostname), [FFmpeg protocol restrictions](https://ffmpeg.org/ffmpeg-protocols.html), and [FFmpeg format and external-track options](https://ffmpeg.org/ffmpeg-formats.html).
+
 ---
 
 **Auto-open after every save.** Obsidian pops open at the new note. Disable with `RESEARCH_AUTOOPEN=0` if you're running batch saves.
@@ -555,7 +564,7 @@ No preset? You get a general-purpose vault that works for everyone.
 PostCompact -> obsidian-bg-agent.sh -> claude -p (headless) -> vault updated
 ```
 
-**What arming it costs.** The headless run uses `--dangerously-skip-permissions`, because nobody is there to approve each write. That is why the agent ships inert and stays opt-in. Its tool surface is pinned to `Read,Write,Edit,Glob,Grep`, so it cannot run shell commands or reach the network, and it only adds and updates - it never deletes or merges. If that trade is not one you want, leave it off; every other command works without it.
+**What arming it costs.** The headless run uses `--dangerously-skip-permissions`, because nobody is there to approve each write. That is why the agent ships inert and stays opt-in. Its tool surface is pinned to `Read,Write,Edit,Glob,Grep`, with no direct shell or network tools. Its instructions request vault-only additions and updates, but these are not operating-system-enforced filesystem boundaries: file tools can still read or overwrite other paths the account can access, and untrusted note content can influence an agent. Do not treat this mode as a sandbox or a guarantee against destructive changes. Leave it off unless you have separately reviewed its permissions and isolation; every other command works without it.
 
 **Scheduled:**
 

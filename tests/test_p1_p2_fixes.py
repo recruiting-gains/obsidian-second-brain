@@ -44,21 +44,26 @@ def test_feed_supplied_urls_pointing_inward_are_refused(url):
     )
 
 
-def test_ordinary_public_urls_still_work():
+def test_ordinary_public_urls_still_work(monkeypatch):
     """Guards against a guard so broad it breaks the feature."""
+    import socket
+
     from research.lib.podcast import safe_fetch_url
+
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **kw: [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+    ])
     assert safe_fetch_url("https://example.com/transcript.vtt") is None
 
 
 def test_both_fetch_sites_call_the_guard():
     src = (REPO_ROOT / "scripts" / "research" / "lib" / "podcast.py").read_text(encoding="utf-8")
-    assert src.count("safe_fetch_url(") >= 3, (
-        "the guard exists but is not called at both the transcript and audio "
-        "fetch sites (plus the redirect re-check)"
-    )
-    assert "allow_redirects=False" in src, (
-        "an allowed host can still 302 the request inward"
-    )
+    guard = (REPO_ROOT / "scripts" / "research" / "lib" / "public_http.py").read_text(encoding="utf-8")
+    assert "fetch_public_bytes(feed_url" in src
+    assert "fetch_public_bytes(transcript_url" in src
+    assert "download_public(audio_url" in src
+    assert "redirect=False" in guard
+    assert "parsed, address = _public_target(url)" in guard
 
 
 # --- B22 -------------------------------------------------------------------

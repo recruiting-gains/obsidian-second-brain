@@ -25,6 +25,12 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 
+from .public_http import download_public, fetch_public_bytes
+from .public_http import safe_fetch_url as safe_fetch_url
+
+MAX_FEED_BYTES = 4 * 1024 * 1024
+MAX_TRANSCRIPT_BYTES = 4 * 1024 * 1024
+
 ITUNES_LOOKUP = "https://itunes.apple.com/lookup"
 ITUNES_SEARCH = "https://itunes.apple.com/search"
 APPLE_RE = re.compile(r"podcasts\.apple\.com/.+/id(\d+)(?:\?i=(\d+))?", re.IGNORECASE)
@@ -90,45 +96,6 @@ def is_url(s: str) -> bool:
         return False
 
 
-def safe_fetch_url(url: str) -> str | None:
-    """Reject a feed-supplied URL that points anywhere but the public internet.
-
-    The transcript and audio URLs come verbatim out of a third-party feed, and
-    the Apple/Spotify lookups resolve to a feedUrl chosen by whoever published
-    the show - so a normal-looking podcasts.apple.com link is enough to reach
-    this code. Without a check, a feed can point at http://localhost:11434, a
-    dev server on 127.0.0.1, or a cloud metadata endpoint, and the response body
-    is then summarized by an LLM and written into the user's vault.
-
-    Returns the reason it was rejected, or None when the URL is safe to fetch.
-    """
-    import ipaddress
-    import socket
-
-    try:
-        u = urlparse(url)
-    except Exception:
-        return "unparseable URL"
-    if u.scheme not in ("http", "https"):
-        return f"scheme {u.scheme!r} is not http/https"
-    host = u.hostname
-    if not host:
-        return "no host"
-    try:
-        infos = socket.getaddrinfo(host, None)
-    except OSError as e:
-        return f"cannot resolve {host}: {e}"
-    for info in infos:
-        try:
-            ip = ipaddress.ip_address(info[4][0])
-        except ValueError:
-            continue
-        if (ip.is_private or ip.is_loopback or ip.is_link_local
-                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
-            return f"{host} resolves to a non-public address ({ip})"
-    return None
-
-
 def resolve_apple_to_rss(apple_url: str) -> tuple[str, str | None, str | None]:
     """Resolve Apple Podcasts URL to (feed_url, episode_id | None, episode_title | None).
 
@@ -179,7 +146,10 @@ def parse_feed(
         raise RuntimeError(
             "feedparser is required. Install with: uv sync (or pip install feedparser)"
         ) from e
-    parsed = feedparser.parse(feed_url)
+    # feedparser can fetch URLs itself, bypassing our private-network guard.
+    # Give it bounded bytes only, including for publisher-selected Apple feeds.
+    feed_body, headers, final_url = fetch_public_bytes(feed_url, max_bytes=MAX_FEED_BYTES)
+    parsed = feedparser.parse(feed_body, response_headers={**headers, "content-location": final_url})
     if parsed.bozo and not parsed.entries:
         raise ValueError(f"Could not parse feed at {feed_url}: {parsed.bozo_exception}")
 
@@ -289,27 +259,13 @@ def _strip_html(s: str) -> str:
 
 def fetch_transcript_tag(transcript_url: str) -> str | None:
     """Download a <podcast:transcript> resource. Supports text/plain, text/html, text/srt, text/vtt, JSON."""
-    bad = safe_fetch_url(transcript_url)
-    if bad:
-        print(f"[podcast transcript-tag refused: {bad}]", file=sys.stderr)
-        return None
     try:
-        # allow_redirects=False: an allowed host must not be able to bounce the
-        # request inward with a 302 after passing the check above.
-        r = requests.get(transcript_url, timeout=30, allow_redirects=False)
-        if r.is_redirect or r.is_permanent_redirect:
-            nxt = r.headers.get("Location", "")
-            bad = safe_fetch_url(nxt) if nxt else "empty redirect target"
-            if bad:
-                print(f"[podcast transcript-tag refused redirect: {bad}]", file=sys.stderr)
-                return None
-            r = requests.get(nxt, timeout=30, allow_redirects=False)
-        r.raise_for_status()
+        data, headers, _ = fetch_public_bytes(transcript_url, max_bytes=MAX_TRANSCRIPT_BYTES)
     except Exception as e:
-        print(f"[podcast transcript-tag fetch failed: {type(e).__name__}: {e}]", file=sys.stderr)
+        print(f"[podcast transcript-tag fetch failed: {type(e).__name__}]", file=sys.stderr)
         return None
-    ctype = (r.headers.get("Content-Type") or "").lower()
-    body = r.text
+    ctype = headers.get("content-type", "").lower()
+    body = data.decode("utf-8-sig", errors="replace")
     if "json" in ctype or transcript_url.endswith(".json"):
         return _parse_json_transcript(body)
     if "vtt" in ctype or transcript_url.endswith(".vtt"):
@@ -387,43 +343,13 @@ def transcribe_via_whisper(audio_url: str, max_bytes: int = 25 * 1024 * 1024) ->
         print("[podcast whisper: openai package not installed]", file=sys.stderr)
         return None
 
-    bad = safe_fetch_url(audio_url)
-    if bad:
-        print(f"[podcast whisper refused: {bad}]", file=sys.stderr)
-        return None
+    tmp_path = None
     try:
-        with requests.get(audio_url, stream=True, timeout=60) as resp:
-            resp.raise_for_status()
-            content_length = int(resp.headers.get("Content-Length", "0") or "0")
-            if content_length and content_length > max_bytes:
-                print(
-                    f"[podcast whisper: audio is {content_length // (1024*1024)} MB, "
-                    f"exceeds OpenAI {max_bytes // (1024*1024)} MB limit]",
-                    file=sys.stderr,
-                )
-                return None
-            suffix = _audio_suffix(audio_url)
-            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-                bytes_written = 0
-                for chunk in resp.iter_content(chunk_size=64 * 1024):
-                    bytes_written += len(chunk)
-                    if bytes_written > max_bytes:
-                        tmp.close()
-                        Path(tmp.name).unlink()
-                        print(
-                            f"[podcast whisper: audio exceeds {max_bytes // (1024*1024)} MB while streaming]",
-                            file=sys.stderr,
-                        )
-                        return None
-                    tmp.write(chunk)
-                tmp_path = tmp.name
-    except Exception as e:
-        print(f"[podcast whisper: audio download failed: {type(e).__name__}: {e}]", file=sys.stderr)
-        return None
-
-    try:
+        with tempfile.NamedTemporaryFile(suffix=_audio_suffix(audio_url), delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+            download_public(audio_url, tmp, max_bytes=max_bytes)
         client = OpenAI(api_key=key)
-        with Path(tmp_path).open("rb") as f:
+        with tmp_path.open("rb") as f:
             result = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=f,
@@ -438,13 +364,14 @@ def transcribe_via_whisper(audio_url: str, max_bytes: int = 25 * 1024 * 1024) ->
         )
         return None
     except Exception as e:
-        print(f"[podcast whisper: transcription failed: {type(e).__name__}: {e}]", file=sys.stderr)
+        print(f"[podcast whisper: download/transcription failed: {type(e).__name__}]", file=sys.stderr)
         return None
     finally:
-        try:
-            Path(tmp_path).unlink()
-        except OSError:
-            pass
+        if tmp_path is not None:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
 
 
 def _audio_suffix(url: str) -> str:

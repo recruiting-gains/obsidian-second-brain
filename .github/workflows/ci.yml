@@ -14,8 +14,10 @@ jobs:
     name: Smoke tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.11"
       # build.sh is pure bash and vault_health.py is stdlib-only, but the
@@ -23,7 +25,7 @@ jobs:
       # via the test interpreter since stress-test fix 5/24) needs `pyyaml`,
       # and the #124 regression fence exercises `.env` loading via `python-dotenv`.
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest requests pyyaml python-dotenv ruff
+        run: python -m pip install --upgrade pip pytest requests pyyaml python-dotenv ruff 'feedparser>=6.0.12' 'urllib3>=2.7.0'
       # CLAUDE.md declares ruff as the Python standard but nothing ran it.
       # The gated set is pinned in pyproject [tool.ruff.lint]; see the comment
       # there for what is deliberately excluded and why.
@@ -54,7 +56,7 @@ jobs:
       # The Obsidian plugin is a second implementation of AI-FIRST.md, in a
       # second language, so it needs its own gate. A linter's failure mode is
       # false positives, and most of these tests are about not firing.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
           cache: npm

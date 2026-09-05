@@ -56,6 +56,37 @@ def test_save_note_refuses_a_same_day_title_collision(vault):
     assert "SECOND CONTENT" not in written
 
 
+@pytest.mark.parametrize("destination", ["outside", "raw", "Templates"])
+def test_default_inbox_cannot_bypass_write_confinement(vault, tmp_path, destination):
+    v, ops = vault
+    target = tmp_path / "outside" if destination == "outside" else v / destination
+    target.mkdir(exist_ok=True)
+    before = {p.name: p.read_bytes() for p in target.iterdir() if p.is_file()}
+    (v / "Inbox").rmdir()  # This fixture directory is empty and test-owned.
+    try:
+        (v / "Inbox").symlink_to(target, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"test host cannot create directory symlinks: {exc}")
+    assert "error" in ops.save_note("Escaped note", "MUST NOT BE WRITTEN")
+    assert "error" in ops.capture_idea("Escaped idea")
+    after = {p.name: p.read_bytes() for p in target.iterdir() if p.is_file()}
+    assert after == before
+
+
+def test_default_inbox_can_link_to_an_ordinary_vault_directory(vault):
+    v, ops = vault
+    destination = v / "Notes"
+    destination.mkdir()
+    (v / "Inbox").rmdir()
+    try:
+        (v / "Inbox").symlink_to(destination, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"test host cannot create directory symlinks: {exc}")
+    result = ops.save_note("Safe note", "INTENDED CONTENT")
+    assert result["saved"].startswith("Notes/")
+    assert "INTENDED CONTENT" in (v / result["saved"]).read_text(encoding="utf-8")
+
+
 def test_update_note_refuses_capitalised_templates_dir(vault):
     _, ops = vault
     result = ops.update_note("Templates/Daily Note.md", append="INJECTED")

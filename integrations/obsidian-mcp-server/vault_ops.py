@@ -790,18 +790,16 @@ def save_note(
     tags = [str(t) for t in (tags or [note_type])]
 
     date = datetime.now().strftime("%Y-%m-%d")
-    if path:
-        requested = path.strip()
-        target = _resolve_in_vault(vault, requested)
-        if target is None:
-            return {"error": "path is outside the vault"}
-        if target.suffix.lower() != ".md":
-            return {"error": "path must end in .md"}
-        if {p.lower() for p in target.relative_to(vault).parts} & _PROTECTED_WRITE_DIRS:
-            return {"error": "path is in a protected directory"}
-    else:
-        inbox = vault / _NOTES_DIR
-        target = inbox / f"{date} - {_slug(title)}.md"
+    requested = path.strip() if path else f"{_NOTES_DIR}/{date} - {_slug(title)}.md"
+    # The default Inbox can itself be a symlink; apply the same confinement and
+    # protected-directory checks as an explicitly supplied path.
+    target = _resolve_in_vault(vault, requested)
+    if target is None:
+        return {"error": "path is outside the vault"}
+    if target.suffix.lower() != ".md":
+        return {"error": "path must end in .md"}
+    if {p.lower() for p in target.relative_to(vault).parts} & _PROTECTED_WRITE_DIRS:
+        return {"error": "path is in a protected directory"}
 
     tag_block = "\n".join(f"  - {t}" for t in tags)
     try:
